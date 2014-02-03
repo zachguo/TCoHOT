@@ -1,12 +1,15 @@
 #! /usr/bin/python
+
 from collections import defaultdict
-import re
+import re, sys
+
+METADATA_PATH_XML = "/Users/syg/Documents/corpora/hathitrust/metadata/non_google_pd_pdus.xml"
+METADATA_PATH_HATHIFILE = "/Users/syg/Documents/corpora/hathitrust/metadata/hathi_full_20140201.txt"
 
 class HathiLang:
 
-	def __init__(self, infilename, outfilename, datasource):
+	def __init__(self, infilename, datasource):
 		self.infilename = infilename
-		self.outfilename = outfilename
 		if datasource == "H":
 			self.lfd = self.getLangFreqDictFromHathifile()
 		elif datasource == "X":
@@ -19,7 +22,12 @@ class HathiLang:
 		with open(self.infilename) as fin:
 			for line in fin:
 				if line:
-					lfd[line.strip()]+=1
+					line = line.strip('\n')
+					lang = line.split('\t')[18]
+					lfd[lang]+=1
+		print "# of Documents: ", sum(lfd.values())
+		print "# of Missing Language Tags: ", lfd[""]
+		print "# of Language Tags: ", sum(lfd.values())-lfd[""]
 		return lfd
 
 	def getLangFreqDictFromXML(self):
@@ -43,14 +51,26 @@ class HathiLang:
 		print "# of Language Tags: ", countLang
 		return lfd
 
-	def outputLangFreq(self):
+	def outputLangFreq(self, outfilename):
 		lfl = sorted(self.lfd.items(), key=lambda x:x[1])
-		with open(self.outfilename, "w") as fout:
+		with open(outfilename, "w") as fout:
 			for lang,freq in lfl:
 				fout.write(lang+"\t"+str(freq)+"\n")
 
+def main():
+	if len(sys.argv) < 2:
+		print "Missing Argument: H or X, please indicate the file format of metadata source, X is XML and H is Hathifile."
+		sys.exit()
+	elif sys.argv[1] not in "HX":
+		print "Invalid Argument: H or X, please indicate the file format of metadata source, X is XML and H is Hathifile."
+		sys.exit()
+	elif sys.argv[1]=="H":
+		hathilang = HathiLang(METADATA_PATH_HATHIFILE, "H")
+		hathilang.outputLangFreq("output/langfreqHathifile.txt")
+	else:
+		hathilang = HathiLang(METADATA_PATH_XML, "X")
+		hathilang.outputLangFreq("output/langfreqXML.txt")
 
 if __name__ == '__main__':
-	# hathilang = HathiLang("language.txt", "languagefreq.txt", "H")
-	hathilang = HathiLang("non_google_pd_pdus.xml", "languagefreqXML.txt", "X")
-	hathilang.outputLangFreq()
+	main()
+	

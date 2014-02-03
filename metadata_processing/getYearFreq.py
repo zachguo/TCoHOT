@@ -1,11 +1,15 @@
 #! /usr/bin/python
+
 from collections import defaultdict
 import matplotlib.pyplot as plt
-import re
+import re, sys
+
+METADATA_PATH_XML = "/Users/syg/Documents/corpora/hathitrust/metadata/non_google_pd_pdus.xml"
+METADATA_PATH_HATHIFILE = "/Users/syg/Documents/corpora/hathitrust/metadata/hathi_full_20140201.txt"
 
 class HathiYear:
 
-	def __init__(self, infilename="idyear.txt", checkIfValid=False, includeInvalid=True, datasource):
+	def __init__(self, infilename, datasource, checkIfValid=False, includeInvalid=True):
 		if datasource == "H":
 			self.yfd = self.getYearFreqDictFromHathifile(infilename, checkIfValid, includeInvalid)
 		elif datasource == "X":
@@ -40,7 +44,7 @@ class HathiYear:
 			for line in fin:
 				if line:
 					line = line.strip('\n')
-					year = line.split('\t')[1]
+					year = line.split('\t')[16]
 					if not checkIfValid:
 						yfd[year]+=1
 					else:
@@ -58,13 +62,13 @@ class HathiYear:
 		print "# of Valid Publication Date: ", sum(yfd.values())-yfd[""]-yfd["2014+"]
 		return yfd
 
-	def outputYearFreq(self, filename="yearfreq.txt", sortByFreq=False):
+	def outputYearFreq(self, outfilename, sortByFreq=False):
 		items = self.yfd.items()
 		if not sortByFreq:
 			items.sort(key=lambda x:x[0])
 		else:
 			items.sort(key=lambda x:x[1])
-		with open(filename, "w") as fout:
+		with open(outfilename, "w") as fout:
 			for date,freq in items:
 				fout.write(str(date)+'\t'+str(freq)+'\n')
 
@@ -76,8 +80,19 @@ class HathiYear:
 		plt.ylabel("Number of Documents")
 		plt.show()
 
+def main():
+	if len(sys.argv) < 2:
+		print "Missing Argument: H or X, please indicate the file format of metadata source, X is XML and H is Hathifile."
+		sys.exit()
+	if sys.argv[1] not in "HX":
+		print "Invalid Argument: H or X, please indicate the file format of metadata source, X is XML and H is Hathifile."
+		sys.exit()
+	elif sys.argv[1]=="H":
+		hathiyear = HathiYear(METADATA_PATH_HATHIFILE, "H", True, True)
+		hathiyear.outputYearFreq("output/yearfreqHathifile.txt")
+	else:
+		hathiyear = HathiYear(METADATA_PATH_XML, "X")
+		hathiyear.outputYearFreq("output/yearfreqXML.txt", True)	
 
 if __name__ == '__main__':
-	hathiyear = HathiYear("non_google_pd_pdus.xml", False, True, "X")
-	# hathiyear = HathiYear("idyear.txt", True, True, "H")
-	hathiyear.outputYearFreq("yearfreqXML.txt", True)
+	main()

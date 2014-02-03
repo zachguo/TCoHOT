@@ -1,11 +1,15 @@
-gu	1
+gu 	1
 ven	1
 tkl	1
+us 	1
 deu	1
+  t	1
 let	1
 lez	1
+ne 	1
 bol	1
 sga	1
+ch 	1
 d\1	1
 N/a	1
 erg	1
@@ -23,9 +27,13 @@ LIT	1
 ffd	1
 its	1
 eua	1
+ at	1
 noo	1
 0 s	1
 rys	1
+fi 	1
+BUL	1
+ sp	1
 sms	1
 anp	1
 bla	1
@@ -34,8 +42,9 @@ ltz	1
 wln	1
 bai	1
 CZE	1
-fi	1
+TUK	1
 and	1
+cs 	1
 sas	1
 sat	1
 lin	1
@@ -44,23 +53,18 @@ Rpa	1
 nge	1
 ]]]	1
 ssw	1
+ pa	1
 ady	1
 arp	1
 ebg	1
-TUK	1
-BUL	1
 381	1
 gwi	1
 g\U	1
 ilu	1
 MON	1
 com	1
-ch	1
-ca	1
-cs	1
+swz	1
 xxx	1
-gba	1
-at	1
 kho	1
 ewo	1
 syc	1
@@ -69,11 +73,10 @@ kis	1
 DAN	1
 ada	1
 dng	1
-\U	1
 rng	1
-t	1
 EST	1
 for	1
+ ca	1
 sag	1
 rug	1
 rup	1
@@ -84,20 +87,22 @@ KUR	1
 son	1
 wal	1
 lol	1
-swz	1
 sid	1
 ead	1
-us	1
 int	1
 myv	1
 khi	1
 inh	1
-ne	1
+gba	1
+ \U	1
 ale	2
 aus	2
 fat	2
+au 	2
 srd	2
 car	2
+  E	2
+  l	2
 mic	2
 mex	2
 ipk	2
@@ -106,19 +111,17 @@ dna	2
 chy	2
 1\1	2
 spo	2
-sz	2
+sz 	2
 tsn	2
 tso	2
 0 0	2
 day	2
-l	2
-en	2
-ru	2
+ en	2
 yug	2
 nzi	2
 sal	2
 kab	2
-01	2
+01 	2
 tyv	2
 fd\	2
 mga	2
@@ -140,22 +143,25 @@ cca	2
 |d	2
 elx	2
 mos	2
+ru 	2
 tvl	2
 ijo	2
 umb	2
 dzo	2
 sog	2
 bua	2
-E	2
-au	2
+po 	3
 fan	3
 gua	3
+  A	3
+  S	3
 tet	3
 abk	3
 aka	3
 chn	3
+emg	3
+ndo	3
 nyu	3
-A	3
 tsw	3
 gor	3
 ath	3
@@ -167,31 +173,27 @@ bas	3
 art	3
 arw	3
 lus	3
-emg	3
+sp 	3
+pd 	3
 iku	3
-S	3
+ar 	3
 tul	3
-pd	3
-po	3
 hmn	3
 peo	3
 tmh	3
-ndo	3
 srr	3
 601	3
-ar	3
-re	4
 tem	4
-sp	4
 ibo	4
 iba	4
 afa	4
 aft	4
 mah	4
-eb	4
 ass	4
+re 	4
 bat	4
 iro	4
+eb 	4
 vot	4
 kik	4
 niu	4
@@ -199,54 +201,55 @@ her	4
 pid	4
 tig	4
 cmc	5
-SWE	5
 men	5
 den	5
 lap	5
 zap	5
 kos	5
+ fr	5
 bej	5
 rar	5
 efi	5
 tpi	5
+SWE	5
 sel	5
+gw 	5
 gaa	5
 vol	5
-gw	5
 UZB	5
 cus	5
 run	5
 nde	5
 alg	6
-ta	6
+nk 	6
 cha	6
+0\U	6
+ta 	6
 fij	6
 crh	6
 udm	6
 cor	6
 jpr	6
 sot	6
-0\U	6
 war	6
 n/a	6
 AZE	6
-nk	6
 cpp	6
+  \	7
 cam	7
+lut	7
 nya	7
 sna	7
 ssa	7
 1\\	7
-G	7
+  G	7
 arn	7
-lut	7
 eth	7
 pau	7
 sao	7
 grb	7
 bis	7
 ach	7
-\	7
 grn	7
 glv	8
 aym	8
@@ -256,8 +259,8 @@ sem	8
 gal	8
 fur	8
 ave	8
+ol 	8
 rur	8
-ol	8
 kru	8
 kro	8
 mnc	9
@@ -265,28 +268,29 @@ d\\	9
 apa	9
 mad	9
 mak	9
+ur 	9
 kac	9
 mus	9
 kin	9
-ur	9
 nav	9
 sso	10
 ava	10
 ewe	10
-na	10
-0	11
+ na	10
 HUN	11
 man	11
 fff	11
+0  	11
 non	11
 nob	11
 kom	11
-dk	11
+dk 	11
 pon	11
 bnt	11
 moh	11
 nds	11
 ina	11
+fr 	12
 sux	12
 che	12
 chr	12
@@ -300,58 +304,60 @@ dra	13
 oss	14
 chm	14
 xho	14
+pn 	14
 mla	14
 RUS	14
-pn	14
 nno	14
 nah	14
+  s	15
+ a 	15
 kon	15
-s	15
 pap	15
 twi	16
 ITA	16
-cz	16
 pag	16
+cz 	16
 tir	16
-fr	17
-r	17
+  r	17
 +25	17
 shn	17
 chg	18
+it 	18
 ton	18
 sai	18
 mun	18
-it	18
+pa 	18
 smo	19
 kam	19
-pa	19
 bik	19
 myn	19
 smi	20
 \\U	20
-jp	20
+ jp	20
+  e	21
 ior	21
-e	21
 btk	22
 jpu	22
 sam	23
 mno	24
+er 	24
 fil	24
-er	24
 gez	24
-a1\	24
 zul	24
+  |	24
+a1\	24
 orm	25
 cre	25
 nai	25
 cho	26
 que	27
 var	27
+  a	28
 sco	29
 cpe	29
-fu	31
 dak	31
 oji	31
+fu 	31
 gay	31
 ber	32
 fao	33
@@ -359,8 +365,9 @@ crp	33
 cpf	33
 jrb	34
 got	34
-00	34
+ 00	34
 goh	35
+|  	35
 cai	36
 kha	38
 hau	39
@@ -368,7 +375,6 @@ esk	39
 kok	41
 a d	41
 lah	43
-a	43
 gae	46
 him	47
 bug	48
@@ -387,7 +393,6 @@ dum	55
 kaa	57
 kaw	58
 tar	59
-|	59
 cop	59
 mao	60
 FRE	60
@@ -395,8 +400,8 @@ pal	62
 mis	64
 fle	65
 hil	65
+  g	66
 mag	66
-g	66
 chv	68
 ilo	68
 lad	69
@@ -409,7 +414,7 @@ kur	80
 min	83
 5a1	84
 haw	87
-ng	92
+ng 	92
 far	93
 esp	93
 ceb	94
@@ -527,6 +532,7 @@ fin	8817
 mar	10399
 san	10994
 arm	11411
+	12302
 d	12922
 vie	13629
 gre	13879
@@ -553,8 +559,8 @@ hin	45480
 unk	50157
 heb	50309
 swe	50575
+   	50982
 kor	53814
-	63284
 dut	76682
 por	82106
 pol	87571
