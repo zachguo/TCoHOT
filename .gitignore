@@ -1,0 +1,5 @@
+metadata_processing/output/*
+*.txt
+*.csv
+*.zip
+.DS_Store
