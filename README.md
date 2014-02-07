@@ -10,3 +10,4 @@ As a kickstarter to familiarize with github workflow, please add your name under
 ### Team
 * Siyuan Guo @zachguo
 * Trevor Edelblute @tedelblu
+* Pallavi Murthy @PallaviMurthy
