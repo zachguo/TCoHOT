@@ -4,4 +4,6 @@ metadata_processing/output/*
 *.zip
 *.docx
 *.pptx
+*.json
+*.xml
 .DS_Store
