@@ -1,5 +1,12 @@
 #!/usr/bin/env python
 
+"""
+Modified to 
+1) keep attribute tag when striping namespace;
+2) abandon json2xml functionality;
+3) return sorted json even without '--pretty' option.
+"""
+
 """xml2json.py  Convert XML to JSON
 
 Relies on ElementTree for the XML parsing.  This is based on
@@ -66,8 +73,7 @@ def elem_to_internal(elem, strip_ns=1, strip=1):
     elem_tag = elem.tag
     if strip_ns:
         elem_tag = strip_tag(elem.tag)
-    else:
-        for key, value in list(elem.attrib.items()):
+    for key, value in list(elem.attrib.items()):
             d['@' + key] = value
 
     # loop over subelements to merge them
@@ -110,48 +116,6 @@ def elem_to_internal(elem, strip_ns=1, strip=1):
         d = text or None
     return {elem_tag: d}
 
-
-def internal_to_elem(pfsh, factory=ET.Element):
-
-    """Convert an internal dictionary (not JSON!) into an Element.
-
-    Whatever Element implementation we could import will be
-    used by default; if you want to use something else, pass the
-    Element class as the factory parameter.
-    """
-
-    attribs = {}
-    text = None
-    tail = None
-    sublist = []
-    tag = list(pfsh.keys())
-    if len(tag) != 1:
-        raise ValueError("Illegal structure with multiple tags: %s" % tag)
-    tag = tag[0]
-    value = pfsh[tag]
-    if isinstance(value, dict):
-        for k, v in list(value.items()):
-            if k[:1] == "@":
-                attribs[k[1:]] = v
-            elif k == "#text":
-                text = v
-            elif k == "#tail":
-                tail = v
-            elif isinstance(v, list):
-                for v2 in v:
-                    sublist.append(internal_to_elem({k: v2}, factory=factory))
-            else:
-                sublist.append(internal_to_elem({k: v}, factory=factory))
-    else:
-        text = value
-    e = factory(tag, attribs)
-    for sub in sublist:
-        e.append(sub)
-    e.text = text
-    e.tail = tail
-    return e
-
-
 def elem2json(elem, options, strip_ns=1, strip=1):
 
     """Convert an ElementTree or Element into a JSON string."""
@@ -162,20 +126,7 @@ def elem2json(elem, options, strip_ns=1, strip=1):
     if options.pretty:
         return json.dumps(elem_to_internal(elem, strip_ns=strip_ns, strip=strip), sort_keys=True, indent=4, separators=(',', ': '))
     else:
-        return json.dumps(elem_to_internal(elem, strip_ns=strip_ns, strip=strip))
-
-
-def json2elem(json_data, factory=ET.Element):
-
-    """Convert a JSON string into an Element.
-
-    Whatever Element implementation we could import will be used by
-    default; if you want to use something else, pass the Element class
-    as the factory parameter.
-    """
-
-    return internal_to_elem(json.loads(json_data), factory)
-
+        return json.dumps(elem_to_internal(elem, strip_ns=strip_ns, strip=strip), sort_keys=True)
 
 def xml2json(xmlstring, options, strip_ns=1, strip=1):
 
@@ -184,27 +135,13 @@ def xml2json(xmlstring, options, strip_ns=1, strip=1):
     elem = ET.fromstring(xmlstring)
     return elem2json(elem, options, strip_ns=strip_ns, strip=strip)
 
-
-def json2xml(json_data, factory=ET.Element):
-
-    """Convert a JSON string into an XML string.
-
-    Whatever Element implementation we could import will be used by
-    default; if you want to use something else, pass the Element class
-    as the factory parameter.
-    """
-
-    elem = internal_to_elem(json.loads(json_data), factory)
-    return ET.tostring(elem)
-
-
 def main():
     p = optparse.OptionParser(
         description='Converts XML to JSON or the other way around.  Reads from standard input by default, or from file if given.',
         prog='xml2json',
         usage='%prog -t xml2json -o file.json [file]'
     )
-    p.add_option('--type', '-t', help="'xml2json' or 'json2xml'", default="xml2json")
+    p.add_option('--type', '-t', help="'xml2json'", default="xml2json")
     p.add_option('--out', '-o', help="Write to OUT instead of stdout")
     p.add_option(
         '--strip_text', action="store_true",
@@ -241,9 +178,6 @@ def main():
        input = input.replace('\n', '').replace('\r','')
     if (options.type == "xml2json"):
         out = xml2json(input, options, strip_ns, strip)
-    else:
-        out = json2xml(input)
-
     if (options.out):
         file = open(options.out, 'w')
         file.write(out)
