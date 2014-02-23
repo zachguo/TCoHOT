@@ -14,3 +14,4 @@ As a kickstarter to familiarize with github workflow, please add your name under
 * Trevor Edelblute @tedelblu
 * Pallavi Murthy @PallaviMurthy
 * Bin Dai @bindai
+* Zhichao Huo @zhhuo
