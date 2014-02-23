@@ -6,4 +6,5 @@ metadata_processing/output/*
 *.pptx
 *.json
 *.xml
+*.pyc
 .DS_Store
