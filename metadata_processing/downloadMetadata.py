@@ -35,10 +35,6 @@ def main():
         if not os.path.isdir(zipfilepath):
             print ("Invalid or non-exist <zip filepath>")
             sys.exit()
-        else:
-            # if output filepath exists, add this path to gitignore
-            with open(os.path.abspath('..')+'/'+'.gitignore','a') as fin:
-                fin.write('./metadata_processing/'+zipfilepath+'*')
     
     # load volume id from file
     idRequest = FileRequest()
