@@ -27,7 +27,7 @@ def downloadZIP(url, outfilename):
 
 def main():        
     if (len(sys.argv) < 3):
-        print ("DownloadVolumes.py <id-filename> <zip filepath>")
+        print ("python downloadMetadata.py <id-filename> <zip filepath>")
         sys.exit()
     else:
         idfilename = str(sys.argv[1])
