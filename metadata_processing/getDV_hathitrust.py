@@ -12,7 +12,10 @@ def xml2mongo(filename, db):
 	# insert xml metadata into mongoDB
 	try:
 		with open(filename) as fin:
-			for doc in xml2json.xml2json_hathitrust(fin.read()).split('\n'):
+			jout = xml2json.xml2json(fin.read())
+		    # remove unnecessary enclosing tags, and convert into mongoDB default format
+		    jout = re.subn(r"(?<=\})\,\s+(?=\{\"\_id)", "\n", jout[24:len(jout)-3])[0]
+			for doc in jout.split('\n'):
 				db.metadata.insert(json.loads(doc))
 		print "Collection 'metadata' is successfully inserted into 'HTRC' database."
 	except IOError:

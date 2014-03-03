@@ -82,23 +82,6 @@ def xml2json(xmlstring, strip_ns=1, strip=1):
     # Note that this json output is in standard json format, not MongoDB default format
     return jout
 
-def xml2json_hathitrust(xmlstring, strip_ns=1, strip=1):
-    # only work for HathiTrust XML metadata, not for HTRC XML metadata
-    jout = xml2json(xmlstring, strip_ns=1, strip=1)
-    # remove unnecessary enclosing tags, and convert into mongoDB default format
-    jout = re.subn(r"(?<=\})\,\s+(?=\{\"\_id)", "\n", jout[24:len(jout)-3])[0]
-    return jout
-
-def xml2json_HTRC(xmlstring, strip_ns=1, strip=1):
-    jout = xml2json(xmlstring, strip_ns=1, strip=1)
-    #################################################
-    #                                               #
-    # CODE NEEDED HERE to convert the json into     #
-    # MongoDB default format with meaningful tags   #
-    #                                               #
-    #################################################
-    return jout
-    
 def main():
     if len(sys.argv) != 3:
         print "Please provide input and output filenames. Input filename first, output filename second."
