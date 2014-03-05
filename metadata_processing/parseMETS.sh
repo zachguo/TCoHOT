@@ -3,4 +3,6 @@
 # egrep the beginning xml tag(s) you want, separate multiples by pipe (|)
 # output or append (>>) to a file, e.g. 'outaa.xml' here
 
+# Created by Trevor Edelblute, Mar 2014.
+
 cat ./out_aa/*.xml | egrep '(PREMIS:objectIdentifierValue|controlfield tag="008")' >> outaa.xml

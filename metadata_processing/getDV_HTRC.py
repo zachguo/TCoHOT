@@ -6,6 +6,8 @@
 # An example folder name is: /path/to/xmlzips/
 # To run: python getDV_HTRC.py /path/to/xmlzips/
 
+# Created by Siyuan Guo, Feb 2014.
+
 from pymongo import MongoClient
 import zipfile,xml2json,json,os,re,sys
 

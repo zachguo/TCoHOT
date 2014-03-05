@@ -1,11 +1,9 @@
 #!/usr/bin/env python
 
-"""Adapted from [xml2json.py](https://github.com/hay/xml2json) to
-1) keep attribute tag when striping namespace;
-2) abandon json2xml functionality;
-3) use mongoDB default formatted JSON (one document perline);
-4) ONLY WORK FOR HATHITRUST XML METADATA;
-"""
+# Adapted from [xml2json.py](https://github.com/hay/xml2json) to
+# 1) keep attribute tag when striping namespace;
+# 2) abandon json2xml functionality;
+
 
 """Original License:
 Copyright (C) 2010-2013, Hay Kranen

@@ -12,6 +12,8 @@
 #   cat test.txt | ./mapper.py | sort | ./reducer.py
 #
 
+# Created by Siyuan Guo, Mar 2014.
+
 import sys
 
 SEPARATOR = "[SEP]"

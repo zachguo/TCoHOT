@@ -1,3 +1,14 @@
+#! /usr/bin/python
+
+# To use the script:
+# Create an empty folder to store your downloaded files, I recommend use a folder location outside the repo. 
+# If you prefer put it in the repo, make sure that the folder name is added into .gitignore.
+# Run 
+#   python downloadMetadata.py <id-filename> <zip filepath> 
+# <zip filepath> is the empty folder you just created, <id-filename> is the volume id file(e.g. vid_splitaa).
+
+# Created by Siyuan Guo, Mar 2014.
+
 import urllib2, zipfile, sys, os
 
 URL_TEMPLATE = "http://chinkapin.pti.indiana.edu:9994/solr/MARC/?volumeIDs="

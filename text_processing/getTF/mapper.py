@@ -11,6 +11,8 @@
 #   cat test.txt | ./mapper.py | sort | ./reducer.py
 #
 
+# Created by Siyuan Guo, Mar 2014.
+
 import sys,os
 
 INPUT_FOLDER_NAME = "HTRCInputFiles" # used for cleaning up working filepath to derive doc_id

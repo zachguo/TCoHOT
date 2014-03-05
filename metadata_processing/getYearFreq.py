@@ -1,5 +1,8 @@
 #! /usr/bin/python
 
+# Get basic statistics of metadata, used for first presentation
+# Created by Siyuan Guo, Feb 2014.
+
 from collections import defaultdict
 import matplotlib.pyplot as plt
 import re, sys
