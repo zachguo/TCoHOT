@@ -10,8 +10,12 @@
 #PBS -j oe
 #PBS -V
 
+echo "Loading modules"
 module add java
 module add python
+java -version
+python -V
+echo
 
 ### Run the myHadoop environment script to set the appropriate variables
 #
@@ -54,7 +58,7 @@ chmod +x $HOME/Z604-Project/text_processing/getDateInText/reducer.py
 echo "Run some test Hadoop jobs"
 $HADOOP_HOME/bin/hadoop fs -mkdir HTRCInputFiles
 $HADOOP_HOME/bin/hadoop fs -put $HOME/HTRCInputFiles/* HTRCInputFiles/
-$HADOOP_HOME/bin/hadoop jar $HADOOP_HOME/contrib/streaming/hadoop-0.20.2-streaming.jar \
+$HADOOP_HOME/bin/hadoop jar -Xms2048m $HADOOP_HOME/contrib/streaming/hadoop-0.20.2-streaming.jar \
 	-file $HOME/Z604-Project/text_processing/getDateInText/mapper.py \
 	-mapper $HOME/Z604-Project/text_processing/getDateInText/mapper.py \
 	-file $HOME/Z604-Project/text_processing/getDateInText/reducer.py \
