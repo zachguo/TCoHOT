@@ -1,4 +1,4 @@
-#! /usr/bin/python
+#! /usr/bin/env python
 
 # Reducer for Hadoop Streaming
 # This reducer reads sorted key-value pairs produced by mappers line by line

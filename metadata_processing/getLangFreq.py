@@ -1,4 +1,4 @@
-#! /usr/bin/python
+#! /usr/bin/env python
 
 # Get basic statistics of metadata, used for first presentation
 # Created by Siyuan Guo, Feb 2014.

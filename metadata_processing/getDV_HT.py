@@ -1,4 +1,4 @@
-#! /usr/bin/python
+#! /usr/bin/env python
 
 # Generate dependent variable in MongoDB.
 # The collection name of metadata source is assumed to be "metadata".

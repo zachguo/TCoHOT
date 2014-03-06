@@ -1,4 +1,4 @@
-#! /usr/bin/python
+#! /usr/bin/env python
 
 # Mapper for Hadoop Streaming
 # This mapper reads text files line by line, then emits key-value pairs into stdout

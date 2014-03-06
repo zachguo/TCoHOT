@@ -1,4 +1,4 @@
-#! /usr/bin/python
+#! /usr/bin/env python
 
 # To use the script:
 # Create an empty folder to store your downloaded files, I recommend use a folder location outside the repo. 

@@ -1,4 +1,4 @@
-#! /usr/bin/python
+#! /usr/bin/env python
 
 # Generate dependent variable in MongoDB.
 # The collection name of extracted dependent variable is "dv".
