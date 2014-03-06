@@ -13,8 +13,17 @@
 echo "Loading modules"
 module add java
 module add python
+echo
+
+echo "Error when 'java -version' but not when 'java -Xmx256m -version'"
 java -version
-python -V
+java -Xmx1024m -version
+echo
+
+echo "What's wrong?"
+cat /proc/meminfo
+echo
+ulimit -a
 echo
 
 ### Run the myHadoop environment script to set the appropriate variables
@@ -38,7 +47,6 @@ $MY_HADOOP_HOME/bin/pbs-configure.sh -n 4 -c $HADOOP_CONF_DIR
 # $MY_HADOOP_HOME/bin/pbs-configure.sh -n 4 -c $HADOOP_CONF_DIR -p -d /oasis/cloudstor-group/HDFS
 echo
 
-export HADOOP_HOME="/opt/hadoop-0.20.2"
 #### Format HDFS, if this is the first time or not a persistent instance
 echo "Format HDFS"
 $HADOOP_HOME/bin/hadoop --config $HADOOP_CONF_DIR namenode -format
@@ -58,7 +66,7 @@ chmod +x $HOME/Z604-Project/text_processing/getDateInText/reducer.py
 echo "Run some test Hadoop jobs"
 $HADOOP_HOME/bin/hadoop fs -mkdir HTRCInputFiles
 $HADOOP_HOME/bin/hadoop fs -put $HOME/HTRCInputFiles/* HTRCInputFiles/
-$HADOOP_HOME/bin/hadoop jar -Xms2048m $HADOOP_HOME/contrib/streaming/hadoop-0.20.2-streaming.jar \
+$HADOOP_HOME/bin/hadoop jar -Xmx1024m $HADOOP_HOME/contrib/streaming/hadoop-0.20.2-streaming.jar \
 	-file $HOME/Z604-Project/text_processing/getDateInText/mapper.py \
 	-mapper $HOME/Z604-Project/text_processing/getDateInText/mapper.py \
 	-file $HOME/Z604-Project/text_processing/getDateInText/reducer.py \
