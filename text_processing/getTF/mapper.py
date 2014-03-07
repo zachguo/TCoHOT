@@ -17,20 +17,35 @@ import sys,os
 
 INPUT_FOLDER_NAME = "HTRCInputFiles" # used for cleaning up working filepath to derive doc_id
 
+def isrubbish(line):
+	length = 0.0
+	gem = 0.0
+	for char in line:
+		length += 1.0
+		if char.isalnum():
+			gem += 1.0
+	if length == 1: return True
+	if length<4 and gem<length: return True
+	if gem/length <= 0.5: return True
+	return False
+
 for line in sys.stdin:
-	words = line.strip().split(' ')
-	if words:
-		if os.environ.has_key('map_input_file'):
-			# there's such a key only in hadoop environment
-			# get doc_id from the filename of currently working file
-			doc_id = os.environ['map_input_file'].split(INPUT_FOLDER_NAME+'/')[1].split('.txt')[0]
-		else:
-			# for local testing
-			doc_id = 'fake_doc_id'
-		# get ngrams
-		# This is a temporary and simplistic model to test basic functionalities. No tokenization or sentence detection etc.
-		for i in range(len(words)):
-			for j in range(i+1,min(i+4, len(words))):
-				term = ' '.join(words[i:j]).lower()
-				# emit key-value pair into stdout, key is a composite key made up of a doc_id, a separator and a term.
-				print '{0}[SEP]{1}\t{2}'.format(doc_id,term,1)
+	line = line.strip()
+	if line:
+		if not isrubbish(line):
+			words = line.split(' ')
+			if words:
+				if os.environ.has_key('map_input_file'):
+					# there's such a key only in hadoop environment
+					# get doc_id from the filename of currently working file
+					doc_id = os.environ['map_input_file'].split(INPUT_FOLDER_NAME+'/')[1].split('.txt')[0]
+				else:
+					# for local testing
+					doc_id = 'fake_doc_id'
+				# get ngrams
+				# This is a temporary and simplistic model to test basic functionalities. No tokenization or sentence detection etc.
+				for i in range(len(words)):
+					for j in range(i+1,min(i+4, len(words))):
+						term = ' '.join(words[i:j]).lower()
+						# emit key-value pair into stdout, key is a composite key made up of a doc_id, a separator and a term.
+						print '{0}[SEP]{1}\t{2}'.format(doc_id,term,1)
