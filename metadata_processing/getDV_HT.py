@@ -5,7 +5,7 @@
 # The collection name of extracted dependent variable is "dv".
 # To run: python getDV.py path/to/metadata.xml
 
-# Created by Bin Dai, Mar 2014.
+# Created by Siyuan Guo, Feb 2014.
 
 from pymongo import MongoClient
 import xml2json, re, sys, json
