@@ -10,6 +10,7 @@
 #
 #   cat test.txt | ./mapper.py | sort | ./reducer.py
 #
+# You can also generate production results locally by modify&run runlocal.sh
 
 # Created by Siyuan Guo, Mar 2014.
 

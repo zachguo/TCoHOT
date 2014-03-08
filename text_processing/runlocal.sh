@@ -4,7 +4,7 @@
 
 # Change paths below before running the script
 export HTRC_TEXT_CONCAT_PATH=/Users/syg/Documents/corpora/hathitrust/concat_data/aa
-# export HTRC_TEXT_CONCAT_PATH=/Users/syg/Dropbox/Projects/Z604-Project/text_processing/getDateInText/test
+# export HTRC_TEXT_CONCAT_PATH=/Users/syg/Dropbox/Projects/Z604-Project/text_processing/test
 export MAPREDUCE_CODES_PATH=/Users/syg/Dropbox/Projects/Z604-Project/text_processing/getDateInText
 # export MAPREDUCE_CODES_PATH=/Users/syg/Dropbox/Projects/Z604-Project/text_processing/getTF
 

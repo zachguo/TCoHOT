@@ -11,12 +11,14 @@
 #
 #   cat test.txt | ./mapper.py | sort | ./reducer.py
 #
+# You can also generate production results locally by modify&run runlocal.sh
 
 # Created by Siyuan Guo, Mar 2014.
 
 import sys
 
 SEPARATOR = "[SEP]"
+COUNT_THRESHOLD = 5
 
 old_key = None
 count = 0
@@ -30,10 +32,12 @@ for line in sys.stdin:
 		# aggregate freq count based on key
 		if old_key and this_key != old_key:
 			# emit {doc_id}\t{term}\t{frequency}
-			print '\t'.join(old_key.split(SEPARATOR)+[str(count)])
+			if count > COUNT_THRESHOLD:
+				print '\t'.join(old_key.split(SEPARATOR)+[str(count)])
 			count = 0
 		old_key = this_key
 		count += val
 if old_key:
 	# don't forget last line
-	print '\t'.join(old_key.split(SEPARATOR)+[str(count)])
+	if count > COUNT_THRESHOLD:
+		print '\t'.join(old_key.split(SEPARATOR)+[str(count)])
