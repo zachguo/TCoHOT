@@ -14,8 +14,12 @@ def main(filepath):
     client = MongoClient('localhost', 27017)
     db = client.HTRC
     collections = db.collection_names()
-    if "tf" in collections:
-        print "Collection 'tf' already exists in 'HTRC' database."
+    if "tf_1" in collections:
+        print "Collection 'tf_1' already exists in 'HTRC' database."
+    elif "tf_2" in collections:
+        print "Collection 'tf_2' already exists in 'HTRC' database."
+    elif "tf_3" in collections:
+        print "Collection 'tf_3' already exists in 'HTRC' database."
     else:
         file = open(filepath)
         try:
@@ -26,7 +30,12 @@ def main(filepath):
                 for line in lines:
                     arr = line.split('\t')
                     doc = {"_doc_id":arr[0], "term": arr[1], "TF":int(arr[2])}
-                    db.tf.insert(doc)
+                    if(arr[1].count(' ')==0):
+                        db.tf_1.insert(doc)
+                    elif(arr[1].count(' ')==1):
+                        db.tf_2.insert(doc)
+                    else:
+                        db.tf_3.insert(doc)
         finally:
             file.close()
 
