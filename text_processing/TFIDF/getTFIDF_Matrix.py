@@ -16,27 +16,24 @@ def main(filepath):
     client = MongoClient('localhost', 27017)
     db = client.HTRC
     dfdict = defaultdict(float)
-    termList = []
-    docNum = db.tf_1.find().count()
-    with open(filepath) as file:
-        for line in file:
+    docNum = db.tf_3.find().count()
+    with open(filepath) as fin:
+        for line in fin:
             if line:
-                term, df =  line.split('\t')
+                term,df = line.split('\t')
                 dfdict[term] = float(df)
-                termList.append(term)
-    file.close()
-    with open('tfidf_1.csv', 'w') as fout:
-        for i in db.tf_1.find():
-            fout.write(i["_id"])
-            tfs = i["tfs"]
-            for term in termList:
-                if term in tfs:
-                    tfidf = float(tfs[term])*(math.log10(docNum)-math.log10(dfdict[term]))
-                    fout.write(',{0}'.format(tfidf))
-                else:
-                    fout.write(',0')
+    termlist = dfdict.keys()
+    print len(termlist)
+    doc_count = 0 # for printing progress
+    with open('tfidf_3.csv', 'w') as fout:
+        for doc in db.tf_3.find():
+            fout.write(doc["_id"])
+            for term in termlist:
+                tfidf = float(doc["tfs"].get(term,0))*(math.log10(docNum)-math.log10(dfdict[term]))
+                fout.write('\t{0}'.format(tfidf))
             fout.write('\n')
-    fout.close()                
+            doc_count += 1
+            if doc_count % 2000==0: print doc_count
 
 
 if __name__ == '__main__':
