@@ -1,5 +1,8 @@
 #! /usr/bin/env python
 
+# Deprecated! HT metadata is no longer used!!!! 
+# We moved to HTRC metadata! Run getDV_HTRC.py instead!!!!
+
 # Generate dependent variable in MongoDB.
 # The collection name of metadata source is assumed to be "metadata".
 # The collection name of extracted dependent variable is "dv".
