@@ -72,18 +72,20 @@ def main(filepath):
                     
         # dont forget last doc
         date_tf.append({"_id":old_key, "dates":freq2prob(tfdict)})
+        db.date_tf.insert(date_tf)
 
+    dr = ["pre-1839","1840-1860","1861-1876","1877-1887","1888-1895","1896-1901","1902-1906","1907-1910","1911-1914","1915-1918","1919-1922","1923-present"]
     with open('date_in_text.csv', 'w') as fout:
+        fout.write(','.join(['doc_id']+dr)+'\n')
         for i in db.date_tf.find():
             fout.write(i["_id"])
             dates = i["dates"]
-            for date in ["pre-1849","1840-1860","1861-1876","1877-1887","1888-1895","1896-1901","1902-1906","1907-1910","1911-1914","1915-1918","1919-1922","1923-present"]:
+            for date in dr:
                 if date in dates:
                     fout.write(',{0}'.format(dates[date]))
                 else:
                     fout.write(',0')
             fout.write('\n')
-    fout.close()
         
 
 if __name__ == '__main__':
