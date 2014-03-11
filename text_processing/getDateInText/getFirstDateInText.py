@@ -15,12 +15,13 @@ def getDate(word):
 		match = re.search(r'(^|\D+)(\d{4})(\D+|$)',word)
 		if match:
 			word = int(match.groups()[1])
-		# assume all date is later than 1500, to filter noise like address#
-		if word>1400 and word<2000:
-			return word
+			# assume all date is later than 1500, to filter noise like address#
+			if word>1400 and word<2000:
+				return word
 	return None
 
 def getDateRangeIndex(year):
+	year = int(year)
 	if year <= 1839:
 	    return 0
 	elif year>=1840 and year <= 1860:
@@ -54,10 +55,10 @@ def main(filepath):
 		fout.write('\t'.join(['doc_id']+dr)+'\n')
 		for fn in allfilenames:
 			doc_id = re.search(r'[^\/]+(?=\.txt$)',fn).group()
+			print doc_id
 			seen_date = False
 			fin = open(fn)
 			line = '.'
-			date = None
 			while not seen_date and line:
 				line = fin.readline()
 				if line:
@@ -70,7 +71,7 @@ def main(filepath):
 								l = ['F']*dr_num
 								l[getDateRangeIndex(date)] = 'T'
 								fout.write('\t'.join([doc_id]+l)+'\n')
-			if not date:
+			if not seen_date:
 				fout.write('\t'.join([doc_id]+['F']*dr_num)+'\n')
 			fin.close()
 
