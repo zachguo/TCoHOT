@@ -51,26 +51,24 @@ def main(filepath):
 	dr = ["pre-1839_1st","1840-1860_1st","1861-1876_1st","1877-1887_1st","1888-1895_1st","1896-1901_1st","1902-1906_1st","1907-1910_1st","1911-1914_1st","1915-1918_1st","1919-1922_1st","1923-present_1st"]
 	dr_num = len(dr)
 	allfilenames = glob.glob(filepath.rstrip('/')+'/*.txt')
-	with open('1stDateInText_aa.txt','w') as fout:
+	with open('DateInText1st_aa.txt','w') as fout:
 		fout.write('\t'.join(['doc_id']+dr)+'\n')
 		for fn in allfilenames:
 			doc_id = re.search(r'[^\/]+(?=\.txt$)',fn).group()
-			print doc_id
 			seen_date = False
 			fin = open(fn)
-			line = '.'
+			line = fin.readline()
 			while not seen_date and line:
+				words = line.strip().split(' ')
+				while words and not seen_date:
+					word = words.pop(0)
+					date = getDate(word)
+					if date:
+						seen_date = True
+						l = ['F']*dr_num
+						l[getDateRangeIndex(date)] = 'T'
+						fout.write('\t'.join([doc_id]+l)+'\n')
 				line = fin.readline()
-				if line:
-					words = line.strip().split(' ')
-					if words:
-						for word in words:
-							date = getDate(word)
-							if date:
-								seen_date = True
-								l = ['F']*dr_num
-								l[getDateRangeIndex(date)] = 'T'
-								fout.write('\t'.join([doc_id]+l)+'\n')
 			if not seen_date:
 				fout.write('\t'.join([doc_id]+['F']*dr_num)+'\n')
 			fin.close()
