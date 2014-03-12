@@ -25,8 +25,8 @@ def main(filepath):
     collections = db.collection_names()
     for c in ['tf_1','tf_2','tf_3']:
         if c in collections: 
-            print "Collection {0} already exists in 'HTRC' database.".format(c)
-            return
+            print "Collection {0} already exists in 'HTRC' database. Drop it.".format(c)
+            db.drop_collection(c)
 
     count = 0 # use for bulk insert without using up memory
     dfdict_uni,dfdict_bi,dfdict_tri = defaultdict(float),defaultdict(float),defaultdict(float) # document frequencies of terms
@@ -75,7 +75,7 @@ def main(filepath):
         db.tf_3.insert(tf_tri)
 
     for i in range(3):
-        with open('df_'+str(i+1)+'.txt', 'w') as fout:
+        with open('df_'+str(i+1), 'w') as fout:
             dfs = [dfdict_uni,dfdict_bi,dfdict_tri]
             for k in dfs[i]:
                 fout.write('{0}\t{1}\n'.format(k,dfs[i][k]))

@@ -18,7 +18,7 @@
 import sys
 
 SEPARATOR = "[SEP]"
-COUNT_THRESHOLD = 5
+COUNT_THRESHOLD = 10
 
 old_key = None
 count = 0
@@ -32,7 +32,7 @@ for line in sys.stdin:
 		# aggregate freq count based on key
 		if old_key and this_key != old_key:
 			# emit {doc_id}\t{term}\t{frequency}
-			if count > COUNT_THRESHOLD:
+			if count >= COUNT_THRESHOLD:
 				print '\t'.join(old_key.split(SEPARATOR)+[str(count)])
 			count = 0
 		old_key = this_key
