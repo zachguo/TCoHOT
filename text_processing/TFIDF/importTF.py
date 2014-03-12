@@ -8,7 +8,7 @@
 
 # To run: python importTF.py /path/to/tf_aa.txt
 
-# Created by Bin Dai, Mar 2014.
+# Created by Bin Dai, Siyuan Guo, Mar 2014.
 
 from pymongo import MongoClient
 from collections import defaultdict

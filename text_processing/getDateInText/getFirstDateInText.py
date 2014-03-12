@@ -1,3 +1,7 @@
+#! /usr/bin/env python
+
+# Created by Siyuan Guo, Mar 2014.
+
 import re,glob,sys
 
 def hasDigit(word):

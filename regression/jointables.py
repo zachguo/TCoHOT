@@ -1,8 +1,8 @@
 #! /usr/bin/env python
 
-import pandas as pd
-
 # Created by Siyuan Guo, Mar 2014.
+
+import pandas as pd
 
 DV_FILEPATH = '/Users/syg/Documents/corpora/hathitrust/processed_data/dv.txt'
 DIT_FILEPATH = '/Users/syg/Documents/corpora/hathitrust/processed_data/date_in_text.csv'
