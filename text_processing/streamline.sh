@@ -21,7 +21,7 @@ do
 
 	cd $i
 	for j in $( ls $HTRC_TEXT_CONCAT_PATH); do
-		export map_input_file=fakepath/HTRCInputFiles/$j
+		export map_input_file=fakepath/$j
 		cat $HTRC_TEXT_CONCAT_PATH/$j | $MAPREDUCE_CODES_PATH/mapper.py | sort | $MAPREDUCE_CODES_PATH/reducer.py >> tf_raw_$i
 	done
 	python $TFIDF_PATH/importTF.py tf_raw_$i

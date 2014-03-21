@@ -12,6 +12,6 @@ chmod +x $MAPREDUCE_CODES_PATH/mapper.py
 chmod +x $MAPREDUCE_CODES_PATH/reducer.py
 
 for i in $( ls $HTRC_TEXT_CONCAT_PATH); do
-	export map_input_file=fakepath/HTRCInputFiles/$i
+	export map_input_file=fakepath/$i
 	cat $HTRC_TEXT_CONCAT_PATH/$i | $MAPREDUCE_CODES_PATH/mapper.py | sort | $MAPREDUCE_CODES_PATH/reducer.py
 done

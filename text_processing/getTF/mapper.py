@@ -16,8 +16,7 @@
 
 import sys,os,re,string
 
-INPUT_FOLDER_NAME = 'HTRCInputFiles' # used for cleaning up working filepath to derive doc_id
-SENTENCE_SEPARATORS = r'(?<! [A-Z])\.+\"?\'?(?=\D|$)|\,\"?\'?(?=\D|$)|\!+\"?\'? ?|\?+\"?\'? ?|\;\"?\'? ?|\: ?'
+SENTENCE_SEPARATORS = re.compile(r'(?<! [A-Z])\.+\"?\'?(?=\D|$)|\,\"?\'?(?=\D|$)|\!+\"?\'? ?|\?+\"?\'? ?|\;\"?\'? ?|\: ?') #precompiled pattern for separating sentences
 
 # @params: line<String> is a striped line
 def isrubbish(line):
@@ -54,7 +53,7 @@ def get_sents(line, leftover):
 		elif leftover[-1].islower() and line[0].islower(): leftover += ' '
 		elif leftover[-1].isupper() and line[0:5].isupper(): leftover += ' '
 		else: leftover += '. '
-	sents = re.split(SENTENCE_SEPARATORS, leftover+line) # concate and split
+	sents = SENTENCE_SEPARATORS.split(leftover+line) # concate and split
 	leftover = sents[-1].strip() # if line ends with a sentence separator, the last element of sents is an empty string
 	sents = sents[0:-1]
 	return sents, leftover
@@ -62,19 +61,21 @@ def get_sents(line, leftover):
 def print_ngram(sent):
 	words = sent.split(' ')
 	if words:
-		# get doc_id from the filename of currently working file
 		if os.environ.has_key('map_input_file'):
 			# there's such a key only in hadoop environment or when running runlocal.sh
-			doc_id = os.environ['map_input_file'].split(INPUT_FOLDER_NAME+'/')[1].split('.txt')[0]
+			fn = os.environ['map_input_file'].split('/')[-1]
 		else:
 			# for local testing
-			doc_id = 'fake_doc_id'
-		# get ngrams
-		for i in range(len(words)):
-			for j in range(i+1,min(i+4, len(words))):
-				term = ' '.join([w.strip(string.punctuation+' ').lower() for w in words[i:j]])
-				# emit key-value pair into stdout, key is a composite key made up of a doc_id, a separator and a term.
-				print '{0}[SEP]{1}\t{2}'.format(doc_id,term,1)
+			fn = 'fake_doc_id.txt'
+		if fn.endswith('.txt'):
+			# get doc_id from the filename of currently working file
+			doc_id = fn.split('.txt')[0]
+			# get ngrams
+			for i in range(len(words)):
+				for j in range(i+1,min(i+4, len(words))):
+					term = ' '.join([w.strip(string.punctuation+' ').lower() for w in words[i:j]])
+					# emit key-value pair into stdout, key is a composite key made up of a doc_id, a separator and a term.
+					print '{0}[SEP]{1}\t{2}'.format(doc_id,term,1)
 
 def main():
 	leftover = ''
