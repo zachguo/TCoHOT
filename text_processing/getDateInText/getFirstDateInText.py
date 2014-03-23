@@ -3,26 +3,25 @@
 # Created by Siyuan Guo, Mar 2014.
 
 import re,glob,sys
+from string import maketrans
 
+digits = re.compile(r'\d')
 def hasDigit(word):
-	for c in word:
-		if c.isdigit():
-			return True
-	return False
+	return bool(digits.search(word))
 
 SC4D = re.compile(r'(^|\D+)(\d{4})(\D+|$)') # precompiled pattern for standalone consecutive 4 digits
+TYPOTABLE = maketrans('lJQOo','11000')
 def getDate(word):
 	if hasDigit(word):
 		# greedily fix potential OCR typos
-		for typo,fix in [('l', '1'),('J','1'),('O','0'),('o','0')]:
-			word = word.replace(typo, fix)
+		word = word.translate(TYPOTABLE)
 		# find standalone consecutive 4 digits, '18888' don't count
 		match = SC4D.search(word)
 		if match:
 			word = int(match.groups()[1])
-			# assume all date is later than 1500, to filter noise like address#
-			if word>1400 and word<2000:
-				return word
+		# assume all date is later than 1500, to filter noise like address#
+		if word>1400 and word<2000:
+			return word
 	return None
 
 def getDateRangeIndex(year):

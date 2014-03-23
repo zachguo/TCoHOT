@@ -14,20 +14,20 @@
 
 # Created by Siyuan Guo, Mar 2014.
 
-import sys,os,re
+import sys,re
+from os import environ
+from string import maketrans
 
+digits = re.compile(r'\d')
 def hasDigit(word):
-	for c in word:
-		if c.isdigit():
-			return True
-	return False
+	return bool(digits.search(word))
 
 SC4D = re.compile(r'(^|\D+)(\d{4})(\D+|$)') # precompiled pattern for standalone consecutive 4 digits
+TYPOTABLE = maketrans('lJOo','1100')
 def getDate(word):
 	if hasDigit(word):
 		# greedily fix potential OCR typos
-		for typo,fix in [('l', '1'),('J','1'),('O','0'),('o','0')]:
-			word = word.replace(typo, fix)
+		word = word.translate(TYPOTABLE)
 		# find standalone consecutive 4 digits, '18888' don't count
 		match = SC4D.search(word)
 		if match:
@@ -40,17 +40,17 @@ def getDate(word):
 for line in sys.stdin:
 	words = line.strip().split(' ')
 	if words:
-		if os.environ.has_key('map_input_file'):
-			# there's such a key only in hadoop environment
-			fn = os.environ['map_input_file'].split('/')[-1]
+		if environ.has_key('map_input_file'):
+			# there's such a key only in hadoop environment or by runlocal.sh
+			fn = environ['map_input_file'].rpartition('/')[-1]
 		else:
 			# for local testing
 			fn = 'fake_doc_id.txt'
-		if fn.endswith('.txt'):
-			# get doc_id from the filename of currently working file
-			doc_id = fn.split('.txt')[0]
+		# get doc_id from the filename of currently working file, non-txt file will return empty string
+		doc_id = fn.rpartition('.txt')[0]
+		if doc_id:
 			# get date in text
 			for word in words:
 				word = getDate(word)
 				if word:
-					print '{0}[SEP]{1}\t{2}'.format(doc_id,word,1)
+					print '%s[SEP]%s\t%s' % (doc_id,word,1)

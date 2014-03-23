@@ -25,19 +25,19 @@ count = 0
 
 for line in sys.stdin:
 	data_row = line.strip().split('\t')
-	if len(data_row) == 2:
+	if len(data_row)==2:
 		# read composite-key and value
 		this_key = data_row[0]
-		val = int(data_row[1])
+		val = int(data_row[-1])
 		# aggregate freq count based on key
 		if old_key and this_key != old_key:
 			# emit {doc_id}\t{term}\t{frequency}
 			if count >= COUNT_THRESHOLD:
-				print '\t'.join(old_key.split(SEPARATOR)+[str(count)])
+				print '\t'.join([old_key.replace(SEPARATOR, '\t'), str(count)])
 			count = 0
 		old_key = this_key
 		count += val
 if old_key:
 	# don't forget last line
 	if count > COUNT_THRESHOLD:
-		print '\t'.join(old_key.split(SEPARATOR)+[str(count)])
+		print '\t'.join([old_key.replace(SEPARATOR, '\t'), str(count)])

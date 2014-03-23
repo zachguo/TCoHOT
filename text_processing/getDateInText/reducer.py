@@ -30,10 +30,10 @@ for line in sys.stdin:
 		# aggregate freq count based on key
 		if old_key and this_key != old_key:
 			# emit {doc_id}\t{term}\t{frequency}
-			print '\t'.join(old_key.split(SEPARATOR)+[str(count)])
+			print '\t'.join([old_key.replace(SEPARATOR, '\t'), str(count)])
 			count = 0
 		old_key = this_key
 		count += val
 if old_key:
 	# don't forget last line
-	print '\t'.join(old_key.split(SEPARATOR)+[str(count)])
+	print '\t'.join([old_key.replace(SEPARATOR, '\t'), str(count)])
