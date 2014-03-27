@@ -1,26 +1,26 @@
 #! /usr/bin/env python
 
-# This module compute TF and DF based on mapreduce tf output, then 
-# import computed term frequencies file into MongoDB, 
-# three collections 'tf_1', 'tf_2' and 'tf_3' will be created in MongoDB, 
-# representing unigram, bigram, and trigram respectively.
-# Also, three text files will be created to store document frequencies.
+# This module compute TFIDF given MapReduce TF output
+
+# Term frequencies are first computed and then imported into MongoDB, as three collections: 
+# 'tf_1', 'tf_2' and 'tf_3', representing unigram, bigram, and trigram respectively.
+# Also, document frequencies are computed along the way and saved into three text files.
+# Finally, compute TFIDF and output computed matrix to a tsv file
 
 # To run: python importTF.py /path/to/tf_aa.txt
 
 # Created by Bin Dai, Siyuan Guo, Mar 2014.
 
+
 from pymongo import MongoClient
 from collections import defaultdict
-import os,re,sys
+import os,re,sys,math
 
 def freq2prob(tfdict):
-    total = sum(tfdict.values())
+    total = sum(tfdict.itervalues())
     return {t:tfdict[t]/total for t in tfdict}
 
-def main(filepath):
-    client = MongoClient('localhost', 27017)
-    db = client.HTRC
+def importTF(filepath, db):
 
     collections = db.collection_names()
     for c in ['tf_1','tf_2','tf_3']:
@@ -74,15 +74,47 @@ def main(filepath):
         db.tf_2.insert(tf_bi)
         db.tf_3.insert(tf_tri)
 
+    # save df (document frequencies) to files ('df_1','df_2','df_3')
     for i in range(3):
         with open('df_'+str(i+1), 'w') as fout:
             dfs = [dfdict_uni,dfdict_bi,dfdict_tri]
             for k in dfs[i]:
                 fout.write('{0}\t{1}\n'.format(k,dfs[i][k]))
 
+def computeTFIDF(db, dfpaths):
+    dfdict = defaultdict(float)
+    tables = [db.tf_1, db.tf_2, db.tf_3]
+    for i in range(len(tables)):
+        alldocs = tables[i].find()
+        docNum = alldocs.count()
+        with open(dfpaths[i]) as fin:
+            for line in fin:
+                if line:
+                    term,df = line.split('\t')
+                    dfdict[term] = float(df)
+        termlist = dfdict.keys()
+        print 'Number of {0}gram: {1}'.format(i,len(termlist))
+        doc_count = 0 # for printing progress
+        with open('tfidf_{0}.tsv'.format(i+1), 'w') as fout:
+            for doc in alldocs:
+                fout.write(doc["_id"])
+                for term in termlist:
+                    tfidf = float(doc["tfs"].get(term,0))*(math.log10(docNum)-math.log10(dfdict[term]))
+                    fout.write('\t{0}'.format(tfidf))
+                fout.write('\n')
+                doc_count += 1
+                if doc_count % 2000==0: print doc_count
+
+def main(filepath):
+    client = MongoClient('localhost', 27017)
+    db = client.HTRC
+    dfpaths = ['df_1','df_2','df_3']
+
+    importTF(filepath, db)
+    computeTFIDF(db, dfpaths)
 
 if __name__ == '__main__':
-	if len(sys.argv) != 2:
-		print "Please provide TF file."
-	else:
-		main(sys.argv[1])
+    if len(sys.argv) != 2:
+        print "Please provide TF file."
+    else:
+        main(sys.argv[1])

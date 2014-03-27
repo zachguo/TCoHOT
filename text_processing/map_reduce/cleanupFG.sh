@@ -5,6 +5,6 @@
 # Clean up working directory after each run of hadoop
 
 rm HTRCDatePBS.log
-rm dateStreaming.sh
+rm runFG.sh
 rm -r myHadoop-config
 rm -r HTRCDateOutputFiles

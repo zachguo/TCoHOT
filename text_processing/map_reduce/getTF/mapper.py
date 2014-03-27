@@ -60,7 +60,7 @@ def get_sents(line, leftover):
 def print_ngram(sent):
 	words = [w.strip(NONALNUM+' ') for w in sent.lower().split(' ')]
 	numw = len(words)
-	if words:
+	if numw:
 		if environ.has_key('map_input_file'):
 			# there's such a key only in hadoop environment or by runlocal.sh
 			fn = environ['map_input_file'].rpartition('/')[-1]

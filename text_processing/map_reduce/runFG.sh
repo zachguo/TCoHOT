@@ -1,6 +1,9 @@
 #!/bin/bash
 
 # Created by Siyuan Guo, Mar 2014
+
+# Shell script to run mapreduce codes on FutureGrid
+
 # Put this shell script in your $HOME directory
 
 #PBS -q batch
@@ -59,18 +62,20 @@ $HADOOP_HOME/bin/start-all.sh
 echo
 
 #### Make sure mapper.p & reducer.py are executable
-chmod +x $HOME/Z604-Project/text_processing/getDateInText/mapper.py
-chmod +x $HOME/Z604-Project/text_processing/getDateInText/reducer.py
+export MAPREDUCE_CODES_PATH="$HOME/Z604-Project/text_processing/mapreduce/getDateInText"
+# export MAPREDUCE_CODES_PATH="$HOME/Z604-Project/text_processing/mapreduce/getTF"
+chmod +x $MAPREDUCE_CODES_PATH/mapper.py
+chmod +x $MAPREDUCE_CODES_PATH/reducer.py
 
 #### Run your jobs here
 echo "Run some test Hadoop jobs"
 $HADOOP_HOME/bin/hadoop fs -mkdir HTRCInputFiles
 $HADOOP_HOME/bin/hadoop fs -put $HOME/HTRCInputFiles/* HTRCInputFiles/
 $HADOOP_HOME/bin/hadoop jar -Xmx1024m $HADOOP_HOME/contrib/streaming/hadoop-0.20.2-streaming.jar \
-	-file $HOME/Z604-Project/text_processing/getDateInText/mapper.py \
-	-mapper $HOME/Z604-Project/text_processing/getDateInText/mapper.py \
-	-file $HOME/Z604-Project/text_processing/getDateInText/reducer.py \
-	-reducer $HOME/Z604-Project/text_processing/getDateInText/reducer.py \
+	-file $MAPREDUCE_CODES_PATH/mapper.py \
+	-mapper $MAPREDUCE_CODES_PATH/mapper.py \
+	-file $MAPREDUCE_CODES_PATH/reducer.py \
+	-reducer $MAPREDUCE_CODES_PATH/reducer.py \
 	-input HTRCInputFiles \
 	-output HTRCDateOutputFiles \
 

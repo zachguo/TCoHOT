@@ -1,6 +1,7 @@
 metadata_processing/output/*
 *.txt
 *.csv
+*.tsv
 *.zip
 *.docx
 *.pptx
