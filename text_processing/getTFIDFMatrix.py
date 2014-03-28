@@ -40,9 +40,9 @@ def importTF(filepath, db):
                 term = term.replace('.','-') # BSON doesn't allow '.' and '$'
                 term = term.replace('$','-')
                 if this_key != old_key and old_key:
-                    tf_uni.append({"_id":old_key, "tfs":freq2prob(tfdict_uni)})
-                    tf_bi.append({"_id":old_key, "tfs":freq2prob(tfdict_bi)})
-                    tf_tri.append({"_id":old_key, "tfs":freq2prob(tfdict_tri)})
+                    tf_uni.append({"_id":old_key, "freq":tfdict_uni, "prob":freq2prob(tfdict_uni)})
+                    tf_bi.append({"_id":old_key, "freq":tfdict_bi, "prob":freq2prob(tfdict_bi)})
+                    tf_tri.append({"_id":old_key, "freq":tfdict_tri, "prob":freq2prob(tfdict_tri)})
                     tfdict_uni,tfdict_bi,tfdict_tri = {},{},{}
                     count += 1
                     if count>2000: # 2000 docs as a batch
@@ -66,9 +66,9 @@ def importTF(filepath, db):
                     dfdict_tri[term] += 1
 
         # dont forget last doc
-        tf_uni.append({"_id":old_key, "tfs":freq2prob(tfdict_uni)})
-        tf_bi.append({"_id":old_key, "tfs":freq2prob(tfdict_bi)})
-        tf_tri.append({"_id":old_key, "tfs":freq2prob(tfdict_tri)})
+        tf_uni.append({"_id":old_key, "freq":tfdict_uni, "prob":freq2prob(tfdict_uni)})
+        tf_bi.append({"_id":old_key, "freq":tfdict_bi, "prob":freq2prob(tfdict_bi)})
+        tf_tri.append({"_id":old_key, "freq":tfdict_tri, "prob":freq2prob(tfdict_tri)})
         # insert regardless of count
         db.tf_1.insert(tf_uni)
         db.tf_2.insert(tf_bi)
@@ -99,7 +99,7 @@ def computeTFIDF(db, dfpaths):
             for doc in alldocs:
                 fout.write(doc["_id"])
                 for term in termlist:
-                    tfidf = float(doc["tfs"].get(term,0))*(math.log10(docNum)-math.log10(dfdict[term]))
+                    tfidf = float(doc["prob"].get(term,0))*(math.log10(docNum)-math.log10(dfdict[term]))
                     fout.write('\t{0}'.format(tfidf))
                 fout.write('\n')
                 doc_count += 1

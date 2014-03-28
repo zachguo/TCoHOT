@@ -13,6 +13,32 @@ from pymongo import MongoClient
 from collections import defaultdict
 import os,re,sys
 
+def date2daterange(year):
+    if year <= 1839:
+        return "pre-1839"
+    elif year>=1840 and year <= 1860:
+        return "1840-1860"
+    elif year>=1861 and year <= 1876:
+        return "1861-1876"
+    elif year>=1877 and year <= 1887:
+        return "1877-1887"
+    elif year>=1888 and year <= 1895:
+        return "1888-1895"
+    elif year>=1896 and year <= 1901:
+        return "1896-1901"
+    elif year>=1902 and year <= 1906:
+        return "1902-1906"
+    elif year>=1907 and year <= 1910:
+        return "1907-1910"
+    elif year>=1911 and year < 1914:
+        return "1911-1914"
+    elif year>=1915 and year <= 1918:
+        return "1915-1918"
+    elif year>=1919 and year <= 1922:
+        return "1919-1922"
+    else:
+        return "1923-present"
+
 def freq2prob(tfdict):
     total = sum(tfdict.values())
     return {t:tfdict[t]/total for t in tfdict}
@@ -22,8 +48,9 @@ def main(filepath):
     db = client.HTRC
     collections = db.collection_names()
     if "date_tf" in collections:
-        print "Collection date_tf already exists in 'HTRC' database."
-        return
+        print "Collection date_tf already exists in 'HTRC' database. Drop it."
+        db.drop_collection("date_tf")
+        
     count = 0 # use for bulk insert without using up memory
     date_tf = [] # list of documents
     with open(filepath) as file:
@@ -44,32 +71,8 @@ def main(filepath):
 
                 old_key = this_key
                 # update date tf 
-                year = float(date)
-                if year <= 1839:
-                    tfdict["pre-1839"]+= float(tf)
-                elif year>=1840 and year <= 1860:
-                    tfdict["1840-1860"]+= float(tf)
-                elif year>=1861 and year <= 1876:
-                    tfdict["1861-1876"]+= float(tf)
-                elif year>=1877 and year <= 1887:
-                    tfdict["1877-1887"]+= float(tf)
-                elif year>=1888 and year <= 1895:
-                    tfdict["1888-1895"]+= float(tf)
-                elif year>=1896 and year <= 1901:
-                    tfdict["1896-1901"]+= float(tf)
-                elif year>=1902 and year <= 1906:
-                    tfdict["1902-1906"]+= float(tf)
-                elif year>=1907 and year <= 1910:
-                    tfdict["1907-1910"]+= float(tf)
-                elif year>=1911 and year < 1914:
-                    tfdict["1911-1914"]+= float(tf)
-                elif year>=1915 and year <= 1918:
-                    tfdict["1915-1918"]+= float(tf)
-                elif year>=1919 and year <= 1922:
-                    tfdict["1919-1922"]+= float(tf)
-                else:
-                    tfdict["1923-present"]+= float(tf)
-                    
+                tfdict[date2daterange(int(date))]+= float(tf)
+
         # dont forget last doc
         date_tf.append({"_id":old_key, "dates":freq2prob(tfdict)})
         db.date_tf.insert(date_tf)

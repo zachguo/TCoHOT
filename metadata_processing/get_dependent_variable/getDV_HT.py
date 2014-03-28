@@ -5,7 +5,7 @@
 
 # Generate dependent variable in MongoDB.
 # The collection name of metadata source is assumed to be "metadata".
-# The collection name of extracted dependent variable is "dv".
+# The collection name of extracted dependent variable is "date".
 # To run: python getDV.py path/to/metadata.xml
 
 # Created by Siyuan Guo, Feb 2014.
@@ -36,29 +36,29 @@ def generateDV(db):
 					doc["date"] = re.subn(r"^\D*(\d{4}).*$", r"\1", date)[0]
 				else:
 					doc["date"] = "ERROR: "+date
-			db.dv.insert(doc)
-		print "Collection 'dv' is successfully inserted into 'HTRC' database."
+			db.date.insert(doc)
+		print "Collection 'date' is successfully inserted into 'HTRC' database."
 	except IOError:
-		print "Failed to insert 'dv' collection into MongoDB."
+		print "Failed to insert 'date' collection into MongoDB."
 
 def main(filename):
 	client = MongoClient('localhost', 27017)
 	db = client.HTRC
 	collections = db.collection_names()
-	if "dv" in collections:
-		print "Collection 'dv' already exists in 'HTRC' database."
+	if "date" in collections:
+		print "Collection 'date' already exists in 'HTRC' database."
 	elif "metadata" in collections:
-		print "Collection 'metadata' already exists in 'HTRC' database. Start generating 'dv' using existing 'metadata' collection."
+		print "Collection 'metadata' already exists in 'HTRC' database. Start generating 'date' using existing 'metadata' collection."
 		generateDV(db)
 	else:
 		xml2mongo(filename, db)
 		generateDV(db)
 	# Test
-	print "empty date: ", db.dv.find({"date":""}).count();
-	print "nonexistent date: ", db.dv.find({"date":{"$exists":0}}).count();
-	print "empty&nonexistent date: ", db.dv.find({"$or":[{"date":""},{"date":{"$exists":0}}]}).count();
-	print "erroneous date: ", db.dv.find({"date":{"$regex":"^ERROR:"}}).count();
-	print "valid date: ", db.dv.find({"date":{"$regex":"^\d{4}"}}).count();
+	print "empty date: ", db.date.find({"date":""}).count();
+	print "nonexistent date: ", db.date.find({"date":{"$exists":0}}).count();
+	print "empty&nonexistent date: ", db.date.find({"$or":[{"date":""},{"date":{"$exists":0}}]}).count();
+	print "erroneous date: ", db.date.find({"date":{"$regex":"^ERROR:"}}).count();
+	print "valid date: ", db.date.find({"date":{"$regex":"^\d{4}"}}).count();
 
 if __name__ == '__main__':
 	if len(sys.argv) != 2:

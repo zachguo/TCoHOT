@@ -18,7 +18,7 @@
 import sys
 
 SEPARATOR = "[SEP]"
-COUNT_THRESHOLD = 10
+COUNT_THRESHOLD = 5
 
 old_key = None
 count = 0
