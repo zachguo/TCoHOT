@@ -11,7 +11,7 @@
 
 from pymongo import MongoClient
 from collections import defaultdict
-import os,re,sys
+import sys
 
 def date2daterange(year):
     if year <= 1839:

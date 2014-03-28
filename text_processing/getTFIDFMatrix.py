@@ -7,7 +7,7 @@
 # Also, document frequencies are computed along the way and saved into three text files.
 # Finally, compute TFIDF and output computed matrix to a tsv file
 
-# To run: python importTF.py /path/to/tf_aa.txt
+# To run: python getTFIDFMatrix.py /path/to/tf_aa.txt
 
 # Created by Bin Dai, Siyuan Guo, Mar 2014.
 
@@ -93,7 +93,7 @@ def computeTFIDF(db, dfpaths):
                     term,df = line.split('\t')
                     dfdict[term] = float(df)
         termlist = dfdict.keys()
-        print 'Number of {0}gram: {1}'.format(i,len(termlist))
+        print 'Number of {0}gram: {1}'.format(i+1,len(termlist))
         doc_count = 0 # for printing progress
         with open('tfidf_{0}.tsv'.format(i+1), 'w') as fout:
             for doc in alldocs:
@@ -111,7 +111,7 @@ def main(filepath):
     dfpaths = ['df_1','df_2','df_3']
 
     importTF(filepath, db)
-    computeTFIDF(db, dfpaths)
+    # computeTFIDF(db, dfpaths)
 
 if __name__ == '__main__':
     if len(sys.argv) != 2:
