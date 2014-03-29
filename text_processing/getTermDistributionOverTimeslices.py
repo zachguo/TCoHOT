@@ -52,6 +52,9 @@ def main():
 		# Convert 2D dictionary into pandas dataframe (named matrix)
 		date_term_matrix = pandas.DataFrame(daterange_tf_dict).fillna(0)
 
+		# Reorder columns
+		date_term_matrix = date_term_matrix[DATERANGES]
+
 		# Filter terms(rows) with too small frequency (less than 50)
 		date_term_matrix = date_term_matrix[date_term_matrix.apply(lambda x:sum(x)>=50, axis=1)]
 		
