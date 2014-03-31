@@ -2,6 +2,7 @@
 
 require(nnet)
 for (run_num in 1:100) {
+  # clear workspace except "run_num"
   rm(list=setdiff(ls(), "run_num"))
   # read and trim data
   data<-read.table("joinedtable_use_this_for_final_analysis.csv", stringsAsFactors=T, header=T)
@@ -20,7 +21,7 @@ for (run_num in 1:100) {
   result<-predict(test, newdata = data.test, "probs")
   # select item with highest likelihood as predicted outcome
   x <- apply(result,1,function(x){return(which(x==max(x)))})
-  int2data<- data.frame(int = c(1:12),date = c("pre-1839","1840-1860","1861-1876","1877-1887","1888-1895","1896-1901","1902.1906","1907-1910","1911-1914","1915-1918","1919-1922","1923-present"))
+  int2data<- data.frame(int = c(1:12),date = c("pre-1839","1840-1860","1861-1876","1877-1887","1888-1895","1896-1901","1902-1906","1907-1910","1911-1914","1915-1918","1919-1922","1923-present"))
   pred <- c()
   gs <- c()
   for (i in 1:length(x)){ 
