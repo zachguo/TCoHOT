@@ -48,6 +48,7 @@ def print_cm(cm, labels):
 
 print '\nConfusion matrix for naive model:\n'
 print_cm(cm_naive, labels)
+# print pandas.DataFrame(cm_naive, index=labels, columns=labels) # can optionally convert confusion matrix to dataframe
 print '\nConfusion matrix for logistic regression model:\n'
 print_cm(cm_lr, labels)
 
