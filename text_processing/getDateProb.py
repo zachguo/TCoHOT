@@ -1,13 +1,11 @@
 #! /usr/bin/env python
 
-# This module combine date frequency by date range, then 
-# import date frequencies file into MongoDB, 
-# collections 'date_tf' will be created in MongoDB, 
-# Also, a matrix(doc, date range) files will be created to store date frequencies.
+# generate date frequencies from MapReduce date output
+# then import generated date freqs into MongoDB as a new field in 'date' collection
 
-# To run: python getDate_Matrix.py /path/to/date_aa.txt
+# To run: python getDateProb.py /path/to/date_aa.txt
 
-# Created by Bin Dai, Mar 2014.
+# Created by Bin Dai & Siyuan Guo, Mar 2014.
 
 from pymongo import MongoClient
 from collections import defaultdict
@@ -47,12 +45,10 @@ def main(filepath):
     client = MongoClient('localhost', 27017)
     db = client.HTRC
     collections = db.collection_names()
-    if "date_tf" in collections:
-        print "Collection date_tf already exists in 'HTRC' database. Drop it."
-        db.drop_collection("date_tf")
+    if "date" not in collections:
+        print "Collection 'date' is required. Please run metadata_processing/get_dependent_variable/getDV_HTRC.py first."
         
-    count = 0 # use for bulk insert without using up memory
-    date_tf = [] # list of documents
+    # assume that 'date' collection is small enough to put in memory
     with open(filepath) as file:
         old_key = None # tracking doc_id
         tfdict = defaultdict(float) # date term frequency dictionary for each document
@@ -60,39 +56,17 @@ def main(filepath):
             if line:
                 this_key,date,tf = line.split('\t')
                 if this_key != old_key and old_key:
-                    date_tf.append({"_id":old_key, "dates":freq2prob(tfdict)})
+                    # to successfully update, use unicode
+                    db.date.update({u"_id":unicode(old_key)},{'$set':{"distribution":freq2prob(tfdict)}})
                     tfdict = defaultdict(float)
-                    count += 1
-                    if count>2000: # 2000 docs as a batch
-                        db.date_tf.insert(date_tf)
-                        # clear memory & count
-                        date_tf = []
-                        count = 0
-
                 old_key = this_key
                 # update date tf 
                 tfdict[date2daterange(int(date))]+= float(tf)
-
         # dont forget last doc
-        date_tf.append({"_id":old_key, "dates":freq2prob(tfdict)})
-        db.date_tf.insert(date_tf)
-
-    dr = ["pre-1839","1840-1860","1861-1876","1877-1887","1888-1895","1896-1901","1902-1906","1907-1910","1911-1914","1915-1918","1919-1922","1923-present"]
-    with open('date_in_text.csv', 'w') as fout:
-        fout.write('\t'.join(['doc_id']+dr)+'\n')
-        for i in db.date_tf.find():
-            fout.write(i["_id"])
-            dates = i["dates"]
-            for date in dr:
-                if date in dates:
-                    fout.write('\t{0}'.format(dates[date]))
-                else:
-                    fout.write('\t0')
-            fout.write('\n')
-        
+        db.date.update({u"_id":unicode(old_key)},{'$set':{"distribution":freq2prob(tfdict)}})
 
 if __name__ == '__main__':
 	if len(sys.argv) != 2:
-		print "Please provide Date Date-In-Text file."
+		print "Please provide MapReduce date output file."
 	else:
 		main(sys.argv[1])

@@ -4,9 +4,9 @@
 # The collection name of extracted dependent variable is "date".
 # After running downloadMetadata.py, you will get a folder contains zip files. 
 # An example folder name is: /path/to/xmlzips/
-# To run: python getDV_HTRC.py /path/to/xmlzips/
+# To run: python getDV.py /path/to/xmlzips/
 
-# Created by Bin Dai, Mar 2014.
+# Created by Bin Dai & Siyuan Guo, Mar 2014.
 
 from pymongo import MongoClient
 import zipfile,xml2json,json,os,re,sys

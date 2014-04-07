@@ -23,7 +23,7 @@ def hasDigit(word):
 	return bool(digits.search(word))
 
 SC4D = re.compile(r'(^|\D+)(\d{4})(\D+|$)') # precompiled pattern for standalone consecutive 4 digits
-TYPOTABLE = maketrans('lJOo','1100')
+TYPOTABLE = maketrans('lJQOo','11000')
 def getDate(word):
 	if hasDigit(word):
 		# greedily fix potential OCR typos
