@@ -23,8 +23,7 @@ def main():
 	db = client.HTRC
 	missing_collections = set(['date','tf_1','tf_2','tf_3'])-set(db.collection_names())
 	if missing_collections:
-		print "Collections %s doesn't exist in 'HTRC' database. Task aborted." % '&'.join(missing_collections)
-		return
+		raise IOError("Collections '%s' doesn't exist in 'HTRC' database. Task aborted." % '&'.join(missing_collections))
 
 	# read all doc_ids for each date range from mongoDB
 	daterange_docid_dict = {} # {'pre-1839':['loc.ark+=13960=t9h42611g', ...], ...}
