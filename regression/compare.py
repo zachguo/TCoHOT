@@ -21,8 +21,8 @@ def run(clf):
 	if not isinstance(clf, TypeType):
 		raise TypeError("Argument should be an instance of Classifier class.")
 	model = clf(preparedata())
-	model.repeat(50)
-	return model.evaluate()
+	model.repeat(100)
+	return model.evaluate(True)
 
 def compare(clf1, clf2):
 	"""
@@ -35,17 +35,20 @@ def compare(clf1, clf2):
 	p1,r1,f1 = run(clf1)
 	p2,r2,f2 = run(clf2)
 	# show mean and std
-	print 'Means: ', mean(f1), mean(f2)
-	print 'Stds: ', std(f1), std(f2)
+	print
+	print 'Precision means: ', mean(p1), mean(p2)
+	print 'Recall    means: ', mean(r1), mean(r2)
+	print 'F-scores  means: ', mean(f1), mean(f2)
+	print
 	# compare model performance using paired t-test
 	print 'Precision - Paired t-test: t={0}, p={1}'.format(*ttest_rel(p1, p2))
-	print 'Recall - Paired t-test: t={0}, p={1}'.format(*ttest_rel(r1, r2))
-	print 'F-score - Paired t-test: t={0}, p={1}'.format(*ttest_rel(f1, f2))
+	print 'Recall    - Paired t-test: t={0}, p={1}'.format(*ttest_rel(r1, r2))
+	print 'F-score   - Paired t-test: t={0}, p={1}'.format(*ttest_rel(f1, f2))
 
 if __name__ == '__main__':
-	print 'Compare baseline & logistic regression:'
+	print '\nCompare baseline & logistic regression:'
 	compare(BL, LR)
-	print 'Compare baseline & decision tree:'
+	print '\nCompare baseline & decision tree:'
 	compare(BL, DT)
-	print 'Compare baseline & support vector machine:'
+	print '\nCompare baseline & support vector machine:'
 	compare(BL, SVM)
