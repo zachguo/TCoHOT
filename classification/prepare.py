@@ -40,27 +40,39 @@ def preparedata():
 	# Connect to mongo
 	client = MongoClient('localhost', 27017)
 	db = client.HTRC
-	missing = set(['date'])-set(db.collection_names())
+	missing = set(['date', "nllr_1", "nllr_2", "nllr_3"])-set(db.collection_names())
 	if missing:
 		raise IOError("Collections '%s' doesn't exist in 'HTRC' database. \
 			Task aborted." % '&'.join(missing))
 
-	# Retrieve relevant data into a pandas dataframe, here we only need 
-	# _id, range, distribution and firstrange. '_id' is identifier and range 
-	# is dependent variable, all others are features. For current feature 
-	# sets, we only use those documents having date distributions.
+	# Retrieve relevant data into a pandas dataframe:
+	# '_id' is identifier and range is dependent variable, all others are features. 
+	# For now, we only use those documents having date distributions.
 	docs = list(db.date.find({u"distribution":{"$exists":1}}, 
 							 {u"firstraw":0, "raw":0}))
 	# The list comprehesion below flattens subdocument 'distribution' out 
 	# into root level
-	data = pd.DataFrame([dict(doc.pop('distribution'), **doc) for doc in docs])
+	data = pd.DataFrame(
+		[dict(doc.pop('distribution'), **doc) for doc in docs]
+		)
 	data = data.fillna(0.0)
 	# Change string reprs of multiclass labels to multiple boolean dummy variables
-	dummyvars = pd.DataFrame([{label+'-1st':True} for label in data['firstrange']])
+	dummyvars = pd.DataFrame(
+		[{label+'-1st':True} for label in data['firstrange']]
+		)
 	dummyvars = dummyvars.fillna(False)
 	# Replace 'firstrange' column by dummy variables
 	data = data.drop('firstrange', 1)
 	for colname in dummyvars.columns.values:
 		data[colname] = dummyvars[colname]
+	# Retrieve NLLR features
+	for i in range(3):
+		nllrc = [db.nllr_1, db.nllr_2, db.nllr_3][i]
+		nllr = pd.DataFrame.from_dict(
+			{doc.pop("_id"):doc for doc in nllrc.find({})}, orient='index'
+			)
+		nllr.rename(columns=lambda x: x+'-nllr-'+str(i), inplace=True)
+		# Inner join data and nllr
+		data = data.merge(nllr, how='inner', left_on="_id", right_index=True)
 	return data
 	
