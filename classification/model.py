@@ -96,6 +96,9 @@ class Classifier(object):
 class BL(Classifier):
 	"""Baseline (Pick 'firstrange' as prediction)"""
 
+	def __repr__(self):
+		return "Baseline"
+
 	def fit_and_predict(self, xtrain, ytrain, xtest, ytest):
 		xtest = xtest[[x for x in xtest.columns if x.endswith('-1st')]]
 		true_colname = lambda x: xtest.columns[(x == True).tolist().index(True)][:-4]
@@ -104,6 +107,9 @@ class BL(Classifier):
 
 class LR(Classifier):
 	"""Logistic Regression (one-vs-all)"""
+
+	def __repr__(self):
+		return "Logistic Regression"
 
 	def fit_and_predict(self, xtrain, ytrain, xtest, ytest):
 		model = LogisticRegression()
@@ -114,6 +120,9 @@ class LR(Classifier):
 class SVM(Classifier):
 	"""Support Vector Machine (one-vs-one)"""
 
+	def __repr__(self):
+		return "Support Vector Machine"
+
 	def fit_and_predict(self, xtrain, ytrain, xtest, ytest):
 		model = SVC()
 		model.fit(xtrain, ytrain)
@@ -122,6 +131,9 @@ class SVM(Classifier):
 
 class DT(Classifier):
 	"""Decision Tree"""
+
+	def __repr__(self):
+		return "Decision Tree"
 
 	def fit_and_predict(self, xtrain, ytrain, xtest, ytest):
 		model = DecisionTreeClassifier()

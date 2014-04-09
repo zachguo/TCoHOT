@@ -24,8 +24,12 @@ class NLLR(object):
 	Lots of lambdas & idiomatic pandas functions will be used, they're superfast!
 	"""
 
-	def __init__(self, db):
-		# check status of mongoDB
+
+	def __init__(self):
+		# Connect to mongo
+		client = MongoClient('localhost', 27017)
+		db = client.HTRC
+		# Check status of mongoDB
 		collections = db.collection_names()
 		musthave = ['date', 'tf_1', 'tf_2', 'tf_3']
 		missing = set(musthave) - set(collections)
@@ -36,30 +40,32 @@ class NLLR(object):
 			if clc in collections: 
 				print "Collection %s already exists in 'HTRC' database. Drop it." % clc
 				db.drop_collection(clc)
-		# initialize, not that db connections don't have getter & setter
+		# Initialize, note that db connections don't have getter & setter
 		self.datec = db.date
 		self.tfcs = [db.tf_1, db.tf_2, db.tf_3]
 		self.nllrcs = [db.nllr_1, db.nllr_2, db.nllr_3]
 		self.dtmatrix = pandas.DataFrame()
 
+
 	def get_dtmatrix(self):
 		"""Getter for dtmatrix"""
 		return self.dtmatrix
 
+
 	def set_dtmatrix(self, dtmatrix):
 		"""Setter for dtmatrix"""
 		self.dtmatrix = dtmatrix
+
 
 	def compute_dtmatrix(self, tfc):
 		"""
 		Convert term frequencies stored in a MongoDB collection into a term*daterange 
 		matrix. 
 
-		@param datec, connection to date collection in HTRC mongo database.
 		@param tfc, connection to one of db.tf_1, db.tf_2 and db.tf_3 collections in 
 		            HTRC mongo database.
 
-		A sample term-timeslice matrix output:
+		A sample daterange-term matrix output:
 		             pre-1839      1840-1860 ...      1919-1922   1923-present  
 		        273885.000000  257701.000000 ...  195615.000000  112005.000000  
 		0         6532.000000    2463.000000 ...     845.000000    1052.000000  
@@ -105,6 +111,7 @@ class NLLR(object):
 	def compute_log_likelihood_ratio(self):
 		"""
 		Compute log( p(w|dr) / p(w/C) ), where dr is daterange and C is corpora.
+
 		@param dtmatrix, a pandas dataframe representing term * daterange matrix.
 		@return a 2D dictionary in format of {'pre-1839':{'term': 0.003, ...}, ...}
 		"""
@@ -120,13 +127,17 @@ class NLLR(object):
 		return llrmatrix.to_dict()
 
 
-	def compute_normalized_log_likelihood_ration(self, tfc):
+	def compute_normalized_log_likelihood_ratio(self, tfc, weighted=True):
 		"""
-		Compute NLLR, using deJong/Rode/Hiemstra Temporal Language Model.
+		Compute NLLR, using deJong/Rode/Hiemstra Temporal Language Model, with a
+		weighting option.
+
+		@param tfc, one of tf_1, tf_2 and tf_3 collections
+		@param weighted, whether or not weighted by temporal entropy.
 		"""
 		nllrdict = {}
 		llrdict = self.compute_log_likelihood_ratio()
-		tedict = self.compute_temporal_entropy()
+		tedict = self.compute_temporal_entropy() if weighted else {}
 		# read p(w|d) from MongoDB ('prob' field in tf_n collections)
 		for doc in tfc.find({}, {"freq":0}):
 			doc_id = doc[u"_id"]
@@ -134,14 +145,14 @@ class NLLR(object):
 			nllrdict[doc_id] = {}
 			for daterange in llrdict:
 				# note not all terms of probs exist in llrdict & tedict
-				nllrdict[doc_id][daterange] = sum([tedict.get(term, 0) * probs[term] * llrdict[daterange].get(term, 0) for term in probs])
+				nllrdict[doc_id][daterange] = sum([tedict.get(term, 1) * probs[term] * llrdict[daterange].get(term, 0) for term in probs])
 		return nllrdict
 
 		
 	def compute_temporal_entropy(self):
 		"""
 		Compute temporal entropy for each term.
-		@param dtmatrix, a pandas dataframe representing term * daterange matrix.
+
 		@return a dictionary of temporal entropies (term as key):
 		        {u'murwara': 0.9999989777855017, 
 		         u'fawn': 0.8813360127166802,
@@ -164,7 +175,7 @@ class NLLR(object):
 		"""Run"""
 		for nllrc, tfc in zip(self.nllrcs, self.tfcs):
 			self.compute_dtmatrix(tfc)
-			nllrdict = self.compute_normalized_log_likelihood_ration(tfc)
+			nllrdict = self.compute_normalized_log_likelihood_ratio(tfc)
 			# transform and save computed NLLR into mongoDB
 			nllrdict = [dict(nllrdict[d], **{u"_id":d}) for d in nllrdict]
 			nllrc.insert(nllrdict)
@@ -172,6 +183,5 @@ class NLLR(object):
 
 
 if __name__ == '__main__':
-	client = MongoClient('localhost', 27017)
-	lm = NLLR(client.HTRC)
+	lm = NLLR()
 	lm.run()
