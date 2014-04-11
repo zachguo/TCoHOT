@@ -10,62 +10,21 @@ from math import log
 import pandas as pd
 
 
-class RunNLLRs(object):
+
+class TLM(object):
 	"""
-	Run NLLR computation for unigram, bigram and trigram.
-	Collections 'date','tf_1','tf_2','tf_3' must exist in mongoDB before execution.
-	"""
-
-	def __init__(self):
-		db = self.connect_mongo()
-		self.datec = db.date
-		self.tfcs = [db.tf_1, db.tf_2, db.tf_3]
-		self.nllrcs = [db.nllr_1, db.nllr_2, db.nllr_3]
-
-
-	@staticmethod
-	def connect_mongo():
-		"""
-		Connect to mongo, and check collection status.
-		"""
-		client = MongoClient('localhost', 27017)
-		db = client.HTRC
-		collections = db.collection_names()
-		musthave = ['date', 'tf_1', 'tf_2', 'tf_3']
-		missing = set(musthave) - set(collections)
-		if missing:
-			raise IOError("Collections '%s' doesn't exist in 'HTRC' database. \
-				Task aborted." % '&'.join(missing))
-		for clc in ['nllr_1', 'nllr_2', 'nllr_3']:
-			if clc in collections: 
-				print "Collection %s already exists in 'HTRC' database. Drop it." % clc
-				db.drop_collection(clc)
-		return db
-
-
-	def run(self):
-		"""Run"""
-		for nllrc, tfc in zip(self.nllrcs, self.tfcs):
-			NLLR(self.datec, tfc, nllrc).run()
-
-
-class NLLR(object):
-	"""
-	Temporal Entropy Weighted Normalized Log Likelihood Ratio
+	Temporal Language Model
 
 	@param datec, connection to date collection in HTRC mongo database.
 	@param tfc, connection to one of 'tf_1', 'tf_2' and 'tf_3' collections in 
 		            HTRC mongo database.
-	@param nllrc, connection to one of 'nllr_1', 'nllr_2' and 'nllr_3' collections
-					to store NLLR results.
-	Lots of lambdas & idiomatic pandas functions will be used, they're superfast!
 	"""
 
-	def __init__(self, datec, tfc, nllrc):
+	def __init__(self, datec, tfc):
 		self.datec = datec
 		self.tfc = tfc
-		self.nllrc = nllrc
 		self.dtmatrix = pd.DataFrame()
+		self.compute_dtmatrix()
 
 
 	def get_dtmatrix(self):
@@ -131,6 +90,24 @@ class NLLR(object):
 		# # Optional: Filter terms(rows) with too small frequency (less than 50)
 		# dtmatrix = dtmatrix[dtmatrix.apply(lambda x:sum(x)>=50, axis=1)]
 		self.set_dtmatrix(dtmatrix)
+
+
+
+class NLLR(TLM):
+	"""
+	Temporal Entropy Weighted Normalized Log Likelihood Ratio
+
+	@param datec, connection to date collection in HTRC mongo database.
+	@param tfc, connection to one of 'tf_1', 'tf_2' and 'tf_3' collections in 
+		            HTRC mongo database.
+	@param nllrc, connection to one of 'nllr_1', 'nllr_2' and 'nllr_3' collections
+					to store NLLR results.
+	Lots of lambdas & idiomatic pandas functions will be used, they're superfast!
+	"""
+
+	def __init__(self, datec, tfc, nllrc):
+		TLM.__init__(self, datec, tfc)
+		self.nllrc = nllrc
 
 
 	@staticmethod
@@ -199,11 +176,51 @@ class NLLR(object):
 
 	def run(self):
 		"""Run"""
-		self.compute_dtmatrix()
 		nllrdict = self.compute_nllr()
 		# transform and save computed NLLR into mongoDB
 		nllrdict = [dict(nllrdict[d], **{u"_id":d}) for d in nllrdict]
 		self.nllrc.insert(nllrdict)
+
+
+
+class RunNLLRs(object):
+	"""
+	Run NLLR computation for unigram, bigram and trigram.
+	Collections 'date','tf_1','tf_2','tf_3' must exist in mongoDB before execution.
+	"""
+
+	def __init__(self):
+		db = self.connect_mongo()
+		self.datec = db.date
+		self.tfcs = [db.tf_1, db.tf_2, db.tf_3]
+		self.nllrcs = [db.nllr_1, db.nllr_2, db.nllr_3]
+
+
+	@staticmethod
+	def connect_mongo():
+		"""
+		Connect to mongo, and check collection status.
+		"""
+		client = MongoClient('localhost', 27017)
+		db = client.HTRC
+		collections = db.collection_names()
+		musthave = ['date', 'tf_1', 'tf_2', 'tf_3']
+		missing = set(musthave) - set(collections)
+		if missing:
+			raise IOError("Collections '%s' doesn't exist in 'HTRC' database. \
+				Task aborted." % '&'.join(missing))
+		for clc in ['nllr_1', 'nllr_2', 'nllr_3']:
+			if clc in collections: 
+				print "Collection %s already exists in 'HTRC' database. Drop it." % clc
+				db.drop_collection(clc)
+		return db
+
+
+	def run(self):
+		"""Run"""
+		for nllrc, tfc in zip(self.nllrcs, self.tfcs):
+			NLLR(self.datec, tfc, nllrc).run()
+
 
 
 if __name__ == '__main__':
