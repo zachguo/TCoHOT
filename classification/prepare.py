@@ -42,7 +42,18 @@ class Data(object):
 
 
 	def __init__(self):
-		# Connect to mongo
+		db = self.connect_mongo()
+		# Initialize, note that db connections don't have getter & setter
+		self.datec = db.date
+		self.nllrcs = [db.nllr_1, db.nllr_2, db.nllr_3]
+		self.data = self.init_data()
+
+
+	@staticmethod
+	def connect_mongo():
+		"""
+		Connect to mongo, and check collection status.
+		"""
 		client = MongoClient('localhost', 27017)
 		db = client.HTRC
 		# Check status of mongoDB
@@ -52,10 +63,6 @@ class Data(object):
 		if missing:
 			raise IOError("Collections '%s' doesn't exist in 'HTRC' database. \
 				Task aborted." % '&'.join(missing))
-		# Initialize, note that db connections don't have getter & setter
-		self.datec = db.date
-		self.nllrcs = [db.nllr_1, db.nllr_2, db.nllr_3]
-		self.data = self.init_data()
 
 
 	def get_data(self):
