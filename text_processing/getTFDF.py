@@ -11,16 +11,12 @@
 
 from pymongo import MongoClient
 from collections import defaultdict
+from utils import freq2prob
 import os,re,sys,math
-
-def freq2prob(tfdict):
-    # conver raw frequencies to probabilities
-    total = sum(tfdict.itervalues())
-    return {t:tfdict[t]/total for t in tfdict}
 
 def reshape(dfdict):
     # reshape df dict from {'term':99, ...} into [ { _id:'term', df:99}, ... ]
-    return map(lambda (x,y):{'_id':x, 'df':y}, dfdict.items())
+    return [{'_id':x, 'df':y} for x, y in dfdict.items()]
 
 def import2mongo(filepath, db):
 
