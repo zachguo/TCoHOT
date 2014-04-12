@@ -281,12 +281,19 @@ class RunTLM(object):
 		return db
 
 
-	def run(self):
-		"""Run"""
+	def run_nllr(self):
+		"""Run NLLR"""
 		for outc, tfc in zip(self.outcs, self.tfcs):
 			NLLR(self.datec, tfc, outc).run()
 
 
+	def run_kld(self):
+		"""Run KLD"""
+		for outc, tfc in zip(self.outcs, self.tfcs):
+			KLD(self.datec, tfc, outc).run()
+
+
 
 if __name__ == '__main__':
-	RunTLM(['kld_1', 'kld_2', 'kld_3']).run()
+	# RunTLM(['nllr_1', 'nllr_2', 'nllr_3']).run_nllr()
+	RunTLM(['kld_1', 'kld_2', 'kld_3']).run_kld()
