@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 
 """
-Siyuan Guo, Apr 2014
+Prepare data for analysis.
+Don't run this module, it's imported by model.py
 
-This module prepare data for analysis.
-No need to run this module, it's imported by model.py
+Siyuan Guo, Apr 2014
 """
 
 # To run properly, collection 'date' should look like this:
@@ -42,10 +42,8 @@ class Data(object):
 
 
 	def __init__(self):
-		db = self.connect_mongo()
-		# Initialize, note that db connections don't have getter & setter
-		self.datec = db.date
-		self.nllrcs = [db.nllr_1, db.nllr_2, db.nllr_3]
+		self.db = self.connect_mongo()
+		self.datec = self.db.date
 		self.data = self.init_data()
 
 
@@ -58,11 +56,12 @@ class Data(object):
 		db = client.HTRC
 		# Check status of mongoDB
 		collections = db.collection_names()
-		musthave = ['date', 'nllr_1', 'nllr_2', 'nllr_3']
+		musthave = ['date', 'nllr_1', 'nllr_2', 'nllr_3', 'kld_1', 'kld_2', 'kld_3']
 		missing = set(musthave) - set(collections)
 		if missing:
 			raise IOError("Collections '%s' doesn't exist in 'HTRC' database. \
 				Task aborted." % '&'.join(missing))
+		return db
 
 
 	def get_data(self):
@@ -112,20 +111,33 @@ class Data(object):
 		self.set_data(data)
 
 
+	def add_text_features(self, featurecnames):
+		"""
+		Retrieve and append text-related features
+
+		@param featurecnames, a list of names of text-related feature collections
+		"""
+		data = self.get_data()
+		for featurecname in featurecnames:
+			featurec = self.db[featurecname]
+			feature = pd.DataFrame.from_dict(
+				{doc.pop("_id"):doc for doc in featurec.find({})}, orient='index'
+				)
+			feature.rename(columns=lambda x: x+'-'+featurecname, inplace=True)
+			# Inner join data and feature
+			data = data.merge(feature, how='inner', left_on="_id", right_index=True)
+		self.set_data(data)
+
+
 	def add_nllr_features(self):
 		"""
 		Retrieve and append TE-weighted-normalized-log-likelihood-ratio features
 		"""
-		data = self.get_data()
-		for i in range(3):
-			nllrc = self.nllrcs[i]
-			nllr = pd.DataFrame.from_dict(
-				{doc.pop("_id"):doc for doc in nllrc.find({})}, orient='index'
-				)
-			nllr.rename(columns=lambda x: x+'-nllr-'+str(i), inplace=True)
-			# Inner join data and nllr
-			data = data.merge(nllr, how='inner', left_on="_id", right_index=True)
-		self.set_data(data)
+		self.add_text_features(['nllr_1', 'nllr_2', 'nllr_3'])
 	
 	
-	
+	def add_kld_features(self):
+		"""
+		Retrieve and append KL-divergence features
+		"""
+		self.add_text_features(['kld_1', 'kld_2', 'kld_3'])

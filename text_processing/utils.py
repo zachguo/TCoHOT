@@ -33,7 +33,17 @@ def date2daterange(year):
 	else:
 		return "1923-present"
 
+
 def freq2prob(tfdict):
-	"""convert raw frequencies to probabilities"""
+	"""convert a dictionary of raw frequencies to probabilities"""
 	total = sum(tfdict.values())
 	return {t:tfdict[t]/total for t in tfdict}
+
+
+def reshape(dict2d):
+	"""
+	Reshape a 2D dictionary into list of dictionary (MongoDB-ready format), 
+	using root level key as _id.
+	"""
+	return [dict(dict2d[d], **{u"_id":d}) for d in dict2d]
+	

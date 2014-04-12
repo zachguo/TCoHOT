@@ -1,21 +1,22 @@
 #!/usr/bin/env python
 
 """
-Siyuan Guo, Apr 2014
+Compares performances of different classifiers.
 
-This module compares performances of different classifiers.
+Siyuan Guo, Apr 2014
 """
 
 from scipy.stats import ttest_rel
 from numpy import mean
 from prepare import Data
-from model import BL, LR, DT, SVM
-from types import TypeType
+from model import BL, LR, DT, SVM, Classifier
 
 def fetch_data():
+	"""Fetch data"""
 	datamodel = Data()
 	datamodel.add_date_features()
-	datamodel.add_nllr_features()
+	# datamodel.add_nllr_features()
+	datamodel.add_kld_features()
 	return datamodel.get_data()
 
 def run(clf):
@@ -24,7 +25,7 @@ def run(clf):
 	@param clf, a classifier.
 	@return precision, recall and f1 scores.
 	"""
-	if not isinstance(clf, TypeType):
+	if not issubclass(clf, Classifier):
 		raise TypeError("Argument should be an instance of Classifier class.")
 	model = clf(fetch_data())
 	print "Running %s..." % str(model)
@@ -37,7 +38,7 @@ def compare(clf1, clf2):
 	@param clf1, first classifier.
 	@param clf1, second classifier.
 	"""
-	if not (isinstance(clf1, TypeType) and isinstance(clf2, TypeType)):
+	if not (issubclass(clf1, Classifier) and issubclass(clf2, Classifier)):
 		raise TypeError("Arguments should be instances of Classifier class.")
 	print '\nCompare {0} & {1}:\n'.format(str(clf1), str(clf2))
 	p1,r1,f1 = run(clf1)
