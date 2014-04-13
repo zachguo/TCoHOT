@@ -247,7 +247,8 @@ class KLD(TLM):
 class RunTLM(object):
 	"""
 	Run various computation based on TLM and save results to mongoDB.
-	Collections 'date','tf_1','tf_2','tf_3' must exist in mongoDB before execution.
+	Collections 'date','tf_1','tf_2','tf_3','cf' must exist in mongoDB 
+	before execution.
 
 	@param outcollections, a list of names of output collections.
 	"""
@@ -256,6 +257,7 @@ class RunTLM(object):
 		db = self.connect_mongo(outcollections)
 		self.datec = db.date
 		self.tfcs = [db.tf_1, db.tf_2, db.tf_3]
+		self.cfc = db.cf
 		self.outcs = [db[outc] for outc in outcollections]
 
 
@@ -269,7 +271,7 @@ class RunTLM(object):
 		client = MongoClient('localhost', 27017)
 		db = client.HTRC
 		collections = db.collection_names()
-		musthave = ['date', 'tf_1', 'tf_2', 'tf_3']
+		musthave = ['date', 'tf_1', 'tf_2', 'tf_3', 'cf']
 		missing = set(musthave) - set(collections)
 		if missing:
 			raise IOError("Collections '%s' doesn't exist in 'HTRC' database. \
@@ -292,8 +294,14 @@ class RunTLM(object):
 		for outc, tfc in zip(self.outcs, self.tfcs):
 			KLD(self.datec, tfc, outc).run()
 
+	def run_ocr(self):
+		"""Run OCR (NLLR based on character language model)"""
+		NLLR(self.datec, self.cfc, self.outcs[0]).run()
+
 
 
 if __name__ == '__main__':
-	# RunTLM(['nllr_1', 'nllr_2', 'nllr_3']).run_nllr()
+	RunTLM(['nllr_1', 'nllr_2', 'nllr_3']).run_nllr()
 	RunTLM(['kld_1', 'kld_2', 'kld_3']).run_kld()
+	RunTLM(['nllr_ocr']).run_ocr()
+

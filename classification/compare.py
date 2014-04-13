@@ -16,9 +16,12 @@ def fetch_data():
 	"""Fetch data"""
 	datamodel = Data()
 	datamodel.add_date_features()
-	# datamodel.add_nllr_features()
-	datamodel.add_kld_features()
-	return datamodel.get_data()
+	datamodel.add_ocr_features()
+	datamodel.add_nllr_features()
+	# datamodel.add_kld_features()
+	data = datamodel.get_data()
+	print data
+	return data
 
 def run(clf):
 	"""

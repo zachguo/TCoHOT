@@ -7,32 +7,10 @@ Don't run this module, it's imported by model.py
 Siyuan Guo, Apr 2014
 """
 
-# To run properly, collection 'date' should look like this:
-#
-#	 {
-#	 	"_id" : "loc.ark+=13960=t02z1nt02",
-#	 	"distribution" : {
-#	 		"1911-1914" : 0.043683589138134596,
-#	 		"1877-1887" : 0.07910271546635184,
-#	 		"1896-1901" : 0.08146399055489964,
-#	 		"pre-1839" : 0.21251475796930341,
-#	 		"1923-present" : 0.01770956316410862,
-#	 		"1907-1910" : 0.02833530106257379,
-#	 		"1888-1895" : 0.06493506493506493,
-#	 		"1902-1906" : 0.043683589138134596,
-#	 		"1919-1922" : 0.0070838252656434475,
-#	 		"1861-1876" : 0.1959858323494687,
-#	 		"1915-1918" : 0.0295159386068477,
-#	 		"1840-1860" : 0.1959858323494687
-#	 	},
-#	 	"firstrange" : "pre-1839",
-#	 	"firstraw" : 1824,
-#	 	"range" : "1919-1922",
-#	 	"raw" : "1919"
-#	 }
 
 from pymongo import MongoClient
 import pandas as pd
+
 
 class Data(object):
 	"""
@@ -141,3 +119,10 @@ class Data(object):
 		Retrieve and append KL-divergence features
 		"""
 		self.add_text_features(['kld_1', 'kld_2', 'kld_3'])
+
+
+	def add_ocr_features(self):
+		"""
+		Retrieve and append OCR features
+		"""
+		self.add_text_features(['nllr_ocr'])
