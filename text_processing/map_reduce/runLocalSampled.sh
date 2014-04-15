@@ -17,7 +17,7 @@ do
 	perl -ne 'print if (rand() < .01)' joinedtable.csv | head -100 | cut -f 2 | sed 's/$/.txt/' | sed 's/^/aa\//' | xargs -J % cp % $i/corpora
 
 	export HTRC_TEXT_CONCAT_PATH=/Users/syg/Documents/corpora/hathitrust/text/concat_data/$i/corpora
-	export MAPREDUCE_CODES_PATH=/Users/syg/Dropbox/Projects/Z604-Project/text_processing/mapreduce/getTF
+	export MAPREDUCE_CODES_PATH=/Users/syg/Dropbox/Projects/Z604-Project/text_processing/map_reduce/getTF
 	export TFIDF_PATH=/Users/syg/Dropbox/Projects/Z604-Project/text_processing/
 
 	chmod +x $MAPREDUCE_CODES_PATH/mapper.py

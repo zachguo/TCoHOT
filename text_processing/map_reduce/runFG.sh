@@ -62,8 +62,8 @@ $HADOOP_HOME/bin/start-all.sh
 echo
 
 #### Make sure mapper.p & reducer.py are executable
-export MAPREDUCE_CODES_PATH="$HOME/Z604-Project/text_processing/mapreduce/getDateInText"
-# export MAPREDUCE_CODES_PATH="$HOME/Z604-Project/text_processing/mapreduce/getTF"
+export MAPREDUCE_CODES_PATH="$HOME/Z604-Project/text_processing/map_reduce/getDateInText"
+# export MAPREDUCE_CODES_PATH="$HOME/Z604-Project/text_processing/map_reduce/getTF"
 chmod +x $MAPREDUCE_CODES_PATH/mapper.py
 chmod +x $MAPREDUCE_CODES_PATH/reducer.py
 

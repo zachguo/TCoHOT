@@ -4,13 +4,13 @@
 
 # Change paths below before running the script
 export HTRC_TEXT_CONCAT_PATH=/Users/syg/Documents/corpora/hathitrust/concat_data/aa
-# export MAPREDUCE_CODES_PATH=/Users/syg/Dropbox/Projects/Z604-Project/text_processing/mapreduce/getDateInText
-export MAPREDUCE_CODES_PATH=/Users/syg/Dropbox/Projects/Z604-Project/text_processing/mapreduce/getTF
+# export MAPREDUCE_CODES_PATH=/Users/syg/Dropbox/Projects/Z604-Project/text_processing/map_reduce/getDateInText
+export MAPREDUCE_CODES_PATH=/Users/syg/Dropbox/Projects/Z604-Project/text_processing/map_reduce/getTF
 
 chmod +x $MAPREDUCE_CODES_PATH/mapper.py
 chmod +x $MAPREDUCE_CODES_PATH/reducer.py
 
-for i in $( ls $HTRC_TEXT_CONCAT_PATH); do
+for i in $( ls $HTRC_TEXT_CONCAT_PATH/*.txt); do
 	export map_input_file=fakepath/$i
 	cat $HTRC_TEXT_CONCAT_PATH/$i | $MAPREDUCE_CODES_PATH/mapper.py | sort | $MAPREDUCE_CODES_PATH/reducer.py
 done
