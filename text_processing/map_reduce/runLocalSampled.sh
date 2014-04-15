@@ -16,7 +16,7 @@ do
 	mkdir $i/corpora
 	perl -ne 'print if (rand() < .01)' joinedtable.csv | head -100 | cut -f 2 | sed 's/$/.txt/' | sed 's/^/aa\//' | xargs -J % cp % $i/corpora
 
-	export HTRC_TEXT_CONCAT_PATH=/Users/syg/Documents/corpora/hathitrust/text/concat_data/$i/corpora
+	export HTRC_TEXT_CONCAT_PATH=/Users/syg/Documents/corpora/hathitrust/corpora/concat_data/$i/corpora
 	export MAPREDUCE_CODES_PATH=/Users/syg/Dropbox/Projects/Z604-Project/text_processing/map_reduce/getTF
 	export TFIDF_PATH=/Users/syg/Dropbox/Projects/Z604-Project/text_processing/
 
@@ -24,9 +24,9 @@ do
 	chmod +x $MAPREDUCE_CODES_PATH/reducer.py
 
 	cd $i
-	for j in $( ls $HTRC_TEXT_CONCAT_PATH); do
+	for j in $( ls $HTRC_TEXT_CONCAT_PATH/*.txt); do
 		export map_input_file=fakepath/$j
-		cat $HTRC_TEXT_CONCAT_PATH/$j | $MAPREDUCE_CODES_PATH/mapper.py | sort | $MAPREDUCE_CODES_PATH/reducer.py >> tf_raw_$i
+		cat $j | $MAPREDUCE_CODES_PATH/mapper.py | sort | $MAPREDUCE_CODES_PATH/reducer.py >> tf_raw_$i
 	done
 	python $TFIDF_PATH/getTFIDFMatrix.py tf_raw_$i
 	cd ..
