@@ -13,7 +13,6 @@ from utils import reshape
 import pandas as pd
 
 
-EPSILON = 0.000001 # constant for smoothing
 DATERANGES = ["pre-1839", "1840-1860", "1861-1876", "1877-1887", 
 			  "1888-1895", "1896-1901", "1902-1906", "1907-1910", 
 			  "1911-1914", "1915-1918", "1919-1922", "1923-present"]
@@ -21,7 +20,10 @@ DATERANGES = ["pre-1839", "1840-1860", "1861-1876", "1877-1887",
 
 class TLM(object):
 	"""
-	Temporal Language Model
+	Temporal Language Model.
+
+	Note it's more like a bag-of-ngrams model than a true generative language 
+	model. So each document and chronon is represented as a bag of ngrams.
 
 	@param datec, connection to date collection in HTRC mongo database.
 	@param tfc, connection to one of 'tf_1', 'tf_2' and 'tf_3' collections in 
@@ -33,7 +35,8 @@ class TLM(object):
 		self.tfc = tfc
 		self.rtmatrix = pd.DataFrame()
 		self.docids = []
-		self.generate_matrix()
+		self.generate_rtmatrix()
+		self.smooth_rtmatrix()
 
 
 	def get_rtmatrix(self):
@@ -56,10 +59,11 @@ class TLM(object):
 		self.docids = docids
 
 
-	def generate_matrix(self):
+	def generate_rtmatrix(self):
 		"""
 		Convert term frequencies stored in a MongoDB collection into a term*daterange 
-		matrix. 
+		matrix. Each cell is raw frequency of a term occurring in a date range.
+		(Unsmoothed)
 
 		A sample daterange-term matrix output:
 		             pre-1839      1840-1860 ...      1919-1922   1923-present  
@@ -97,26 +101,31 @@ class TLM(object):
 					print "No term frequency for doc %s." % docid
 
 		# Convert 2D dictionary into pandas dataframe (named matrix), with a simple
-		# smoothing: add EPSILON.
-		rtmatrix = pd.DataFrame(dr_tf_dict).fillna(EPSILON)
+		rtmatrix = pd.DataFrame(dr_tf_dict)
 		# Reorder columns of range * term matrix
 		rtmatrix = rtmatrix[DATERANGES]
 		self.set_rtmatrix(rtmatrix)
 		self.set_docids(reduce(lambda x, y: x+y, dr_docid_dict.values()))
 
 
+	def smooth_rtmatrix(self):
+		"""
+		Smooth rtmatrix using Good-Turing Method.
+		"""
+		pass
+
 
 class NLLR(TLM):
 	"""
 	Temporal Entropy Weighted Normalized Log Likelihood Ratio 
 	A document distance metric from Kanhabua & Norvag (2008)
+	Lots of lambdas & idiomatic pandas functions will be used, they're superfast!
 
 	@param datec, connection to date collection in HTRC mongo database.
 	@param tfc, connection to one of 'tf_1', 'tf_2' and 'tf_3' collections in 
 		            HTRC mongo database.
 	@param nllrc, connection to one of 'nllr_1', 'nllr_2' and 'nllr_3' collections
 					to store NLLR results.
-	Lots of lambdas & idiomatic pandas functions will be used, they're superfast!
 	"""
 
 	def __init__(self, datec, tfc, nllrc):
@@ -200,6 +209,12 @@ class NLLR(TLM):
 
 
 
+class CS(TLM):
+	"""Cosine similarity"""
+	pass
+
+
+
 class KLD(TLM):
 	"""
 	Kullback-Leibler divergence
@@ -207,7 +222,7 @@ class KLD(TLM):
 	@param datec, connection to date collection in HTRC mongo database.
 	@param tfc, connection to one of 'tf_1', 'tf_2' and 'tf_3' collections in 
 		            HTRC mongo database.
-	@param kld, connection to one of 'kld_1', 'kld_2' and 'kld_3' collections
+	@param kldc, connection to one of 'kld_1', 'kld_2' and 'kld_3' collections
 					to store NLLR results.
 	"""
 
@@ -266,6 +281,7 @@ class RunTLM(object):
 		"""
 		Connect to mongo, and check collection status.
 
+		@param outcollections, a list of names of output collections.
 		@return db connection.
 		"""
 		client = MongoClient('localhost', 27017)
