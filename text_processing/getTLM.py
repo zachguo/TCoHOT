@@ -9,7 +9,7 @@ Siyuan Guo, Apr 2014
 from pymongo import MongoClient
 from collections import defaultdict
 from math import log, log10
-from utils import reshape
+from utils import reshape, sgt_smoothing
 import pandas as pd
 
 
@@ -100,19 +100,25 @@ class TLM(object):
 				else:
 					print "No term frequency for doc %s." % docid
 
-		# Convert 2D dictionary into pandas dataframe (named matrix), with a simple
+		# Convert 2D dictionary into pandas dataframe (named matrix)
 		rtmatrix = pd.DataFrame(dr_tf_dict)
 		# Reorder columns of range * term matrix
 		rtmatrix = rtmatrix[DATERANGES]
 		self.set_rtmatrix(rtmatrix)
 		self.set_docids(reduce(lambda x, y: x+y, dr_docid_dict.values()))
+		print "Finish initializing term * daterange matrix."
+		print rtmatrix
 
 
 	def smooth_rtmatrix(self):
 		"""
 		Smooth rtmatrix using Good-Turing Method.
 		"""
-		pass
+		rtmatrix = self.get_rtmatrix()
+		rtmatrix = pd.DataFrame(sgt_smoothing(rtmatrix.to_dict()))
+		self.set_rtmatrix(rtmatrix)
+		print "Finish smoothing term * daterange matrix."
+		print rtmatrix
 
 
 class NLLR(TLM):

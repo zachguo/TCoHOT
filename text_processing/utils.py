@@ -47,3 +47,23 @@ def reshape(dict2d):
 	"""
 	return [dict(dict2d[d], **{u"_id":d}) for d in dict2d]
 	
+def sgt_smoothing(rtmatrix_dict):
+	"""Simple Good Turing Smoothing"""
+	from sgt.sgt import simpleGoodTuringProbs as sgtp
+	for daterange in rtmatrix_dict:
+		freqdict = rtmatrix_dict[daterange]
+		nonzero_freqdict, zero_freqdict = {}, {}
+		for k in freqdict:
+			if freqdict[k] > 0:
+				nonzero_freqdict[k] = freqdict[k]
+			else:
+				zero_freqdict[k] = 0
+		smoothed_freqdict, pzero, totalcounts = sgtp(nonzero_freqdict)
+		for k in nonzero_freqdict:
+			freqdict[k] = smoothed_freqdict[k] * totalcounts
+		smoothed_zero = pzero * totalcounts / len(zero_freqdict)
+		for k in zero_freqdict:
+			freqdict[k] = smoothed_zero
+		rtmatrix_dict[daterange] = freqdict
+	return rtmatrix_dict
+
