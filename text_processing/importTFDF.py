@@ -35,12 +35,12 @@ def import2mongo(filepath):
             db.drop_collection(c)
 
     count = 0 # use for bulk insert without using up memory
-    dfdict_uni, dfdict_bi, dfdict_tri = [defaultdict(float)] * 3 # document frequencies of terms
-    tf_uni, tf_bi, tf_tri = [[]] * 3 # list of documents
+    dfdict_uni, dfdict_bi, dfdict_tri = defaultdict(float), defaultdict(float), defaultdict(float) # document frequencies of terms
+    tf_uni, tf_bi, tf_tri = [], [], [] # list of documents
     chardoclist = []
     with codecs.open(filepath, encoding='utf8') as fin:
         old_key = None # tracking doc_id
-        tfdict_uni, tfdict_bi, tfdict_tri = [{}] * 3 # term frequency dictionary for each document
+        tfdict_uni, tfdict_bi, tfdict_tri = {}, {}, {} # term frequency dictionary for each document
         chardict = defaultdict(float)
         for line in fin:
             if line:
@@ -51,7 +51,7 @@ def import2mongo(filepath):
                     tf_bi.append({"_id":old_key, "freq":tfdict_bi, "prob":freq2prob(tfdict_bi)})
                     tf_tri.append({"_id":old_key, "freq":tfdict_tri, "prob":freq2prob(tfdict_tri)})
                     chardoclist.append({"_id":old_key, "freq":chardict, "prob":freq2prob(chardict)})
-                    tfdict_uni, tfdict_bi, tfdict_tri = [{}] * 3
+                    tfdict_uni, tfdict_bi, tfdict_tri = {}, {}, {}
                     chardict = defaultdict(float)
                     count += 1
                     if count > 2000: # 2000 docs as a batch
@@ -60,7 +60,7 @@ def import2mongo(filepath):
                         db.tf_3.insert(tf_tri)
                         db.cf.insert(chardoclist)
                         # clear memory & count
-                        tf_uni, tf_bi, tf_tri = [[]] * 3
+                        tf_uni, tf_bi, tf_tri = [], [], []
                         chardoclist = []
                         count = 0
 
