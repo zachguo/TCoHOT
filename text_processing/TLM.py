@@ -13,6 +13,7 @@ from utils import reshape
 import pandas as pd
 
 
+EPSILON = 0.00001
 DATERANGES = ["pre-1839", "1840-1860", "1861-1876", "1877-1887", 
 			  "1888-1895", "1896-1901", "1902-1906", "1907-1910", 
 			  "1911-1914", "1915-1918", "1919-1922", "1923-present"]
@@ -22,8 +23,8 @@ class TLM(object):
 	"""
 	Temporal Language Model.
 
-	Note it's more like a bag-of-ngrams model than a true generative language 
-	model. So each document and chronon is represented as a bag of ngrams.
+	Note, it's more like a bag-of-ngrams model than a true generative language 
+	model. Each document and chronon is represented as a bag of ngrams.
 
 	@param datec, connection to date collection in HTRC mongo database.
 	@param tfc, connection to one of 'tf_1', 'tf_2' and 'tf_3' collections in 
@@ -36,7 +37,6 @@ class TLM(object):
 		self.rtmatrix = pd.DataFrame()
 		self.docids = []
 		self.generate_rtmatrix()
-		self.smooth_rtmatrix()
 
 
 	def get_rtmatrix(self):
@@ -101,18 +101,12 @@ class TLM(object):
 					print "No term frequency for doc %s." % docid
 
 		# Convert 2D dictionary into pandas dataframe (named matrix), with a simple
-		rtmatrix = pd.DataFrame(dr_tf_dict)
+		rtmatrix = pd.DataFrame(dr_tf_dict).fillna(EPSILON)
 		# Reorder columns of range * term matrix
 		rtmatrix = rtmatrix[DATERANGES]
 		self.set_rtmatrix(rtmatrix)
 		self.set_docids(reduce(lambda x, y: x+y, dr_docid_dict.values()))
 
-
-	def smooth_rtmatrix(self):
-		"""
-		Smooth rtmatrix using Good-Turing Method.
-		"""
-		pass
 
 
 class NLLR(TLM):
@@ -147,8 +141,7 @@ class NLLR(TLM):
 		tfcorpora = rtmatrix.sum(axis=1)
 		tfcorpora = tfcorpora.div(tfcorpora.sum(axis=0))
 		# Compute log likelihood ratio
-		llrmatrix = tfdaterange.div(tfcorpora, axis=0)
-		llrmatrix = llrmatrix.applymap(log)
+		llrmatrix = tfdaterange.div(tfcorpora, axis=0).applymap(log)
 		return llrmatrix.to_dict()
 
 		
@@ -194,10 +187,6 @@ class NLLR(TLM):
 				probs = tfdoc[u"prob"]
 				nllrdict[docid] = {}
 				for daterange in DATERANGES:
-					# note that there's no smoothing for document LM, and I think it's
-					# not necessary to smooth document LM, because the score of each 
-					# date range were added a same amount of value after smoothing.
-					# ('for term in probs' means that I simply disgard unseen words)
 					nllrdict[docid][daterange] = sum([tedict[term] * probs[term] * llrdict[daterange][term] for term in probs])
 		return nllrdict
 
@@ -210,8 +199,27 @@ class NLLR(TLM):
 
 
 class CS(TLM):
-	"""Cosine similarity"""
-	pass
+	"""
+	Cosine similarity
+
+	@param datec, connection to date collection in HTRC mongo database.
+	@param tfc, connection to one of 'tf_1', 'tf_2' and 'tf_3' collections in 
+		            HTRC mongo database.
+	@param csc, connection to one of 'csc_1', 'csc_2' and 'csc_3' collections
+					to store Cos-Sim results.
+	"""
+	
+	def __init__(self, datec, tfc, csc):
+		TLM.__init__(self, datec, tfc)
+		self.csc = csc
+
+
+	def compute_cs(self):
+		"""
+		Compute cosine similarity between each pair of term & chronon
+
+		@return a 2D dictionary of CSs in format {docid:{daterange: .. } .. }
+		"""
 
 
 
@@ -223,7 +231,7 @@ class KLD(TLM):
 	@param tfc, connection to one of 'tf_1', 'tf_2' and 'tf_3' collections in 
 		            HTRC mongo database.
 	@param kldc, connection to one of 'kld_1', 'kld_2' and 'kld_3' collections
-					to store NLLR results.
+					to store KL Divergence results.
 	"""
 
 	def __init__(self, datec, tfc, kldc):

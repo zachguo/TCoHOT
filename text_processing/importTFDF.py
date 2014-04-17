@@ -7,7 +7,7 @@ TF, DF & CF into MongoDB as seven collections:
     'tf_1', 'tf_2', 'tf_3', 'df_1', 'df_2', 'df_3', 'cf'
 
 To run: 
-    python getTF.py /path/to/tf_aa.txt
+    python importTFDF.py /path/to/tf_aa.txt
 
 Created by Bin Dai, Siyuan Guo, Mar 2014.
 """

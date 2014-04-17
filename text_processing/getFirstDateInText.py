@@ -1,20 +1,27 @@
 #! /usr/bin/env python
 
-# Created by Siyuan Guo, Mar 2014.
+"""
+Scan and print first date-in-text.
+This script is intended to run locally, to run:
+	python getFirstDateInText.py path/to/aa > date1st_aa.txt
 
-import re,glob,sys
+Siyuan Guo, Mar 2014.
+"""
+
+import re, glob, sys
 from string import maketrans
-from pymongo import MongoClient
-from utils import date2daterange
 
-digits = re.compile(r'\d')
-def hasDigit(word):
-	return bool(digits.search(word))
+DIGITS = re.compile(r'\d')
+def has_digit(word):
+	"""Check whether word contains digits"""
+	return bool(DIGITS.search(word))
 
-SC4D = re.compile(r'(^|\D+)(\d{4})(\D+|$)') # precompiled pattern for standalone consecutive 4 digits
-TYPOTABLE = maketrans('lJQOo','11000')
-def getDate(word):
-	if hasDigit(word):
+# precompiled pattern for standalone consecutive 4 digits
+SC4D = re.compile(r'(^|\D+)(\d{4})(\D+|$)')
+TYPOTABLE = maketrans('lJQOo', '11000')
+def get_date(word):
+	"""Get date from potential date string"""
+	if has_digit(word):
 		# greedily fix potential OCR typos
 		word = word.translate(TYPOTABLE)
 		# find standalone consecutive 4 digits, '18888' don't count
@@ -22,40 +29,33 @@ def getDate(word):
 		if match:
 			word = int(match.groups()[1])
 		# assume all date is later than 1500, to filter noise like address#
-		if word>1400 and word<2000:
+		if word > 1400 and word < 2000:
 			return word
 	return None
 
 def main(filepath):
-	client = MongoClient('localhost', 27017)
-	db = client.HTRC
-	collections = db.collection_names()
-	if "date" not in collections:
-		print "Collection 'date' is required. \
-		Please run metadata_processing/get_dependent_variable/getDV_HTRC.py first."
-
-	# scan first date-in-text
+	"""Scan and print first date-in-text"""
 	allfilenames = glob.glob(filepath.rstrip('/')+'/*.txt')
-	for fn in allfilenames:
-		fn_short = fn.split('/')[-1]
-		if fn_short.endswith('.txt'):
-			doc_id = fn_short.split('.txt')[0]
+	for fname in allfilenames:
+		fname_short = fname.split('/')[-1]
+		if fname_short.endswith('.txt'):
+			doc_id = fname_short.split('.txt')[0]
 			seen_date = False
-			fin = open(fn)
+			fin = open(fname)
 			line = fin.readline()
 			while not seen_date and line:
 				words = line.strip().split(' ')
 				while words and not seen_date:
 					word = words.pop(0)
-					date = getDate(word)
+					date = get_date(word)
 					if date:
 						seen_date = True
-						db.date.update({u"_id":unicode(doc_id)},{'$set':{"firstraw":date, "firstrange":date2daterange(date)}})
+						print "{0}\t{1}".format(doc_id, date)
 				line = fin.readline()
 			fin.close()
 
 if __name__ == '__main__':
 	if len(sys.argv) != 2:
-		print "Please provide the path of text corpora. Yes, that folder cantaining 250k documents."
+		raise IOError("Please provide the path of text corpora.")
 	else:
 		main(sys.argv[1])
