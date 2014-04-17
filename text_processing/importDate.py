@@ -37,7 +37,7 @@ def import_date(fp_date, db):
 		tfdict = defaultdict(float) # date term frequency dictionary for each document
 		for line in fin:
 			if line:
-				this_key, date, tf = line.split('\t')
+				this_key, date, tf = line.strip('\n').split('\t')
 				if this_key != old_key and old_key:
 					# to successfully update, use unicode
 					db.date.update({u"_id":unicode(old_key)}, {'$set':{"distribution":freq2prob(tfdict)}})
@@ -54,16 +54,16 @@ def import_date1st(fp_date1st, db):
 	with open(fp_date1st) as fin:
 		for line in fin:
 			if line:
-				doc_id, date = line.split('\t')
+				doc_id, date = line.strip('\n').split('\t')
 				db.date.update({u"_id":unicode(doc_id)},{'$set':{"firstraw":date, "firstrange":date2daterange(date)}})
 	print "Finish importing 1st-date-in-texts."
 
 if __name__ == '__main__':
 	if len(sys.argv) != 3:
 		raise IOError("Please provide \
-                1) MapReduce date output file and \
-                2) output file from getFirstDateInText.py. \
-                (Two arguments should be given)")
+                \n1) MapReduce date output file and \
+                \n2) output file from getFirstDateInText.py. \
+                \n(Two arguments should be given)")
 	elif sys.argv[2].find('1st') < 0:
 		raise IOError("Second argument must contain '1st'.")
 	else:
