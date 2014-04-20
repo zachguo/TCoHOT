@@ -159,13 +159,9 @@ class NLLR(TLM):
 		"""
 		# Normalize each row from freq to prob
 		rtmatrix = rtmatrix.div(rtmatrix.sum(axis=1), axis=0)
-		# compute temporal entropy and return it
-		# note that our formula is a bit different from that in (N&K 2005)
-		# instead of normalizing temporal entropy by 1/log(N), we simply use
-		# 1/log(1500) because our number of documents in each chronon all 
-		# around 1500.
+		# compute temporal entropy and return it, 12 is number of chronons.
 		rtmatrix = rtmatrix.applymap(lambda x: x*log(x)).sum(axis=1)
-		return rtmatrix.apply(lambda e: 1+1/log(1500)*e).to_dict()
+		return rtmatrix.apply(lambda e: 1+1/log(12)*e).to_dict()
 
 
 	def compute_nllr(self, weighted=True):
