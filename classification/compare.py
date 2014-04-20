@@ -14,14 +14,18 @@ from itertools import combinations
 
 def fetch_data():
 	"""Fetch data"""
+	print 'Preparing data for analysis...'
 	datamodel = Data()
 	datamodel.add_date_features()
-	datamodel.add_ocr_features()
+	# datamodel.add_ocr_features()
 	datamodel.add_nllr_features()
 	# datamodel.add_kld_features()
+	datamodel.add_cs_features()
 	data = datamodel.get_data()
-	print data
+	print 'Data is ready: [{0} rows x {1} columns]'.format(*data.shape)
 	return data
+
+READYDATA = fetch_data()
 
 def run(clf):
 	"""
@@ -31,7 +35,7 @@ def run(clf):
 	"""
 	if not issubclass(clf, Classifier):
 		raise TypeError("Argument should be an instance of Classifier class.")
-	model = clf(fetch_data())
+	model = clf(READYDATA)
 	print "Running %s..." % str(model)
 	model.repeat(100)
 	return model.evaluate()

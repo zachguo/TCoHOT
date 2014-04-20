@@ -8,12 +8,12 @@ Siyuan Guo, Apr 2014
 
 from pymongo import MongoClient
 from collections import defaultdict
-from math import log, log10
+from math import log, log10, sqrt
 from utils import reshape
 import pandas as pd
 
 
-EPSILON = 0.00001
+EPSILON = 0.0001
 DATERANGES = ["pre-1839", "1840-1860", "1861-1876", "1877-1887", 
 			  "1888-1895", "1896-1901", "1902-1906", "1907-1910", 
 			  "1911-1914", "1915-1918", "1919-1922", "1923-present"]
@@ -75,6 +75,7 @@ class TLM(object):
 		[281271 rows x 12 columns]
 		"""
 
+		print "Generating term * chronon matrix..."
 		# read all doc IDs for each date range from mongoDB into a dictionary:
 		# {'pre-1839':['loc.ark+=13960=t9h42611g', ...], ...}
 		dr_docid_dict = {}
@@ -98,7 +99,7 @@ class TLM(object):
 					for term in tfdict:
 						dr_tf_dict[daterange][term] += tfdict[term]
 				else:
-					print "No term frequency for doc %s." % docid
+					print "Warning: no term frequency for doc %s." % docid
 
 		# Convert 2D dictionary into pandas dataframe (named matrix), with a simple
 		rtmatrix = pd.DataFrame(dr_tf_dict).fillna(EPSILON)
@@ -176,6 +177,7 @@ class NLLR(TLM):
 		@param weighted, whether or not weighted by temporal entropy.
 		@return a 2D dictionary of NLLRs in format {docid:{daterange: .. } .. }
 		"""
+		print 'Computing TEwNLLR...'
 		nllrdict = {}
 		llrdict = self.compute_llr(self.get_rtmatrix())
 		tedict = self.compute_te(self.get_rtmatrix()) if weighted else {}
@@ -193,8 +195,7 @@ class NLLR(TLM):
 
 	def run(self):
 		"""Run"""
-		nllrdict = self.compute_nllr()
-		self.nllrc.insert(reshape(nllrdict))
+		self.nllrc.insert(reshape(self.compute_nllr()))
 
 
 
@@ -220,6 +221,32 @@ class CS(TLM):
 
 		@return a 2D dictionary of CSs in format {docid:{daterange: .. } .. }
 		"""
+		print 'Computing Cosine-similarity...'
+		csdict = {}
+		docids = self.get_docids()
+		rtmatrix = self.get_rtmatrix()
+		# Normalize each column from freq to prob: p(w|dr)
+		rtmatrix = rtmatrix.div(rtmatrix.sum(axis=0), axis=1)
+		# a vector of which each cell is the vector length for a chronon
+		rvlength = rtmatrix.applymap(lambda x: x*x).sum(axis=0).apply(sqrt)
+		rvlength = rvlength.to_dict()
+		rtmatrix = rtmatrix.to_dict()
+		for docid in docids:
+			tfdoc = self.tfc.find_one({u"_id":docid})
+			if tfdoc:
+				probs = tfdoc[u"prob"]
+				csdict[docid] = {}
+				# a vector of which each cell is the vector length for a doc
+				dvlength = sqrt(sum([x*x for x in probs.values()]))
+				for daterange in DATERANGES:
+					cossim = sum([probs[term] * rtmatrix[daterange][term] for term in probs]) / (dvlength * rvlength[daterange])
+					csdict[docid][daterange] = cossim if cossim >= -1 and cossim <= 1 else 0
+		return csdict
+
+
+	def run(self):
+		"""Run"""
+		self.csc.insert(reshape(self.compute_cs()))
 
 
 
@@ -245,6 +272,7 @@ class KLD(TLM):
 
 		@return a 2D dictionary of KLDs in format {docid:{daterange: .. } .. }
 		"""
+		print 'Computing KL-Divergence...'
 		klddict = {}
 		docids = self.get_docids()
 		rtmatrix = self.get_rtmatrix()
@@ -262,8 +290,7 @@ class KLD(TLM):
 
 	def run(self):
 		"""Run"""
-		klddict = self.compute_kld()
-		self.kldc.insert(reshape(klddict))
+		self.kldc.insert(reshape(self.compute_kld()))
 
 
 
@@ -318,6 +345,11 @@ class RunTLM(object):
 		for outc, tfc in zip(self.outcs, self.tfcs):
 			KLD(self.datec, tfc, outc).run()
 
+	def run_cs(self):
+		"""Run CS"""
+		for outc, tfc in zip(self.outcs, self.tfcs):
+			CS(self.datec, tfc, outc).run()
+
 	def run_ocr(self):
 		"""Run OCR (NLLR based on character language model)"""
 		NLLR(self.datec, self.cfc, self.outcs[0]).run()
@@ -327,5 +359,6 @@ class RunTLM(object):
 if __name__ == '__main__':
 	RunTLM(['nllr_1', 'nllr_2', 'nllr_3']).run_nllr()
 	RunTLM(['kld_1', 'kld_2', 'kld_3']).run_kld()
+	RunTLM(['cs_1', 'cs_2', 'cs_3']).run_cs()
 	RunTLM(['nllr_ocr']).run_ocr()
 

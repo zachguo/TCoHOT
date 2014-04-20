@@ -121,6 +121,13 @@ class Data(object):
 		self.add_text_features(['kld_1', 'kld_2', 'kld_3'])
 
 
+	def add_cs_features(self):
+		"""
+		Retrieve and append Cosine-Similarity features
+		"""
+		self.add_text_features(['cs_1', 'cs_2', 'cs_3'])
+
+
 	def add_ocr_features(self):
 		"""
 		Retrieve and append OCR features

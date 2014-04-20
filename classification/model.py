@@ -102,7 +102,7 @@ class BL(Classifier):
 	def fit_and_predict(self, xtrain, ytrain, xtest, ytest):
 		xtest = xtest[[x for x in xtest.columns if x.endswith('-1st')]]
 		true_colname = lambda x: xtest.columns[(x == True).tolist().index(True)][:-4]
-		ypred = (xtest.apply(true_colname, axis=1)).tolist()
+		ypred = xtest.apply(true_colname, axis=1).tolist()
 		return ytest, ypred
 
 class LR(Classifier):

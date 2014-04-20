@@ -55,7 +55,7 @@ def import_date1st(fp_date1st, db):
 		for line in fin:
 			if line:
 				doc_id, date = line.strip('\n').split('\t')
-				db.date.update({u"_id":unicode(doc_id)},{'$set':{"firstraw":date, "firstrange":date2daterange(date)}})
+				db.date.update({u"_id":unicode(doc_id)},{'$set':{"firstraw":date, "firstrange":date2daterange(int(date))}})
 	print "Finish importing 1st-date-in-texts."
 
 if __name__ == '__main__':
