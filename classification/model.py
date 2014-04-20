@@ -100,7 +100,10 @@ class BL(Classifier):
 		return "Baseline"
 
 	def fit_and_predict(self, xtrain, ytrain, xtest, ytest):
-		xtest = xtest[[x for x in xtest.columns if x.endswith('-1st')]]
+		featurelabels = [x for x in xtest.columns if x.endswith('-1st')]
+		if not featurelabels:
+			raise ValueError('Baseline model requires date features, but date features don\'t exist')
+		xtest = xtest[featurelabels]
 		true_colname = lambda x: xtest.columns[(x == True).tolist().index(True)][:-4]
 		ypred = xtest.apply(true_colname, axis=1).tolist()
 		return ytest, ypred
