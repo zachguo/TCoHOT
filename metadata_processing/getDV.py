@@ -14,25 +14,25 @@ import zipfile,xml2json,json,os,re,sys
 def date2daterange(year):
     if year <= 1839:
         return "pre-1839"
-    elif year>=1840 and year <= 1860:
+    elif year >= 1840 and year <= 1860:
         return "1840-1860"
-    elif year>=1861 and year <= 1876:
+    elif year >= 1861 and year <= 1876:
         return "1861-1876"
-    elif year>=1877 and year <= 1887:
+    elif year >= 1877 and year <= 1887:
         return "1877-1887"
-    elif year>=1888 and year <= 1895:
+    elif year >= 1888 and year <= 1895:
         return "1888-1895"
-    elif year>=1896 and year <= 1901:
+    elif year >= 1896 and year <= 1901:
         return "1896-1901"
-    elif year>=1902 and year <= 1906:
+    elif year >= 1902 and year <= 1906:
         return "1902-1906"
-    elif year>=1907 and year <= 1910:
+    elif year >= 1907 and year <= 1910:
         return "1907-1910"
-    elif year>=1911 and year < 1914:
+    elif year >= 1911 and year <= 1914:
         return "1911-1914"
-    elif year>=1915 and year <= 1918:
+    elif year >= 1915 and year <= 1918:
         return "1915-1918"
-    elif year>=1919 and year <= 1922:
+    elif year >= 1919 and year <= 1922:
         return "1919-1922"
     else:
         return "1923-present"
@@ -63,10 +63,11 @@ def main(foldername):
     foldername = foldername.rstrip('/')
     client = MongoClient('localhost', 27017)
     db = client.HTRC
-    collections = db.collection_names()
-    if "date" in collections:
-        print "Collection 'date' already exists in 'HTRC' database. Drop it."
-        db.drop_collection('date')
+    # Need not to check when inserting all volumes
+    # collections = db.collection_names()
+    # if "date" in collections:
+    #     print "Collection 'date' already exists in 'HTRC' database. Drop it."
+    #     db.drop_collection('date')
     for file in os.listdir(foldername):
         if(file.endswith(".zip")):
             zipfilepath = foldername+'/'+file

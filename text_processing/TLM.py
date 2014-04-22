@@ -332,22 +332,26 @@ class RunTLM(object):
 
 	def run_nllr(self):
 		"""Run NLLR"""
+		print 'Generate NLLR...'
 		for outc, tfc in zip(self.outcs, self.tfcs):
 			NLLR(self.datec, tfc, outc).run()
 
 
 	def run_kld(self):
 		"""Run KLD"""
+		print 'Generate KLD...'
 		for outc, tfc in zip(self.outcs, self.tfcs):
 			KLD(self.datec, tfc, outc).run()
 
 	def run_cs(self):
 		"""Run CS"""
+		print 'Generate CS...'
 		for outc, tfc in zip(self.outcs, self.tfcs):
 			CS(self.datec, tfc, outc).run()
 
 	def run_ocr(self):
 		"""Run OCR (NLLR based on character language model)"""
+		print 'Generate OCR...'
 		NLLR(self.datec, self.cfc, self.outcs[0]).run()
 
 

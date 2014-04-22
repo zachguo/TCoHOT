@@ -112,6 +112,7 @@ class Data(object):
 		Retrieve and append TE-weighted-normalized-log-likelihood-ratio features
 		"""
 		self.add_text_features(['nllr_1', 'nllr_2', 'nllr_3'])
+		print 'Add TE-weighted-normalized-log-likelihood-ratio features.'
 	
 	
 	def add_kld_features(self):
@@ -119,6 +120,7 @@ class Data(object):
 		Retrieve and append KL-divergence features
 		"""
 		self.add_text_features(['kld_1', 'kld_2', 'kld_3'])
+		print 'Add KL-divergence features.'
 
 
 	def add_cs_features(self):
@@ -126,6 +128,7 @@ class Data(object):
 		Retrieve and append Cosine-Similarity features
 		"""
 		self.add_text_features(['cs_1', 'cs_2', 'cs_3'])
+		print 'Add Cosine-Similarity features.'
 
 
 	def add_ocr_features(self):
@@ -133,3 +136,4 @@ class Data(object):
 		Retrieve and append OCR features
 		"""
 		self.add_text_features(['nllr_ocr'])
+		print 'Add OCR features.'
