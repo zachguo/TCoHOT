@@ -13,10 +13,12 @@ from utils import reshape
 import pandas as pd
 
 
+
 EPSILON = 0.0001
 DATERANGES = ["pre-1839", "1840-1860", "1861-1876", "1877-1887", 
 			  "1888-1895", "1896-1901", "1902-1906", "1907-1910", 
 			  "1911-1914", "1915-1918", "1919-1922", "1923-present"]
+
 
 
 class TLM(object):
@@ -136,6 +138,7 @@ class NLLR(TLM):
 		@param rtmatrix, a pandas dataframe representing term * daterange matrix.
 		@return a 2D dictionary in format of {'pre-1839':{'term': 0.003, ...}, ...}
 		"""
+
 		# Normalize each column from freq to prob: p(w|dr)
 		tfdaterange = rtmatrix.div(rtmatrix.sum(axis=0), axis=1)
 		# Sum all columns into one column then convert from freq to prob: p(w|C)
@@ -157,6 +160,7 @@ class NLLR(TLM):
 		         u'fawn': 0.8813360127166802,
 		         ... }
 		"""
+
 		# Normalize each row from freq to prob
 		rtmatrix = rtmatrix.div(rtmatrix.sum(axis=1), axis=0)
 		# compute temporal entropy and return it, 12 is number of chronons.
@@ -173,6 +177,7 @@ class NLLR(TLM):
 		@param weighted, whether or not weighted by temporal entropy.
 		@return a 2D dictionary of NLLRs in format {docid:{daterange: .. } .. }
 		"""
+
 		print 'Computing TEwNLLR...'
 		nllrdict = {}
 		llrdict = self.compute_llr(self.get_rtmatrix())
@@ -217,6 +222,7 @@ class CS(TLM):
 
 		@return a 2D dictionary of CSs in format {docid:{daterange: .. } .. }
 		"""
+
 		print 'Computing Cosine-similarity...'
 		csdict = {}
 		docids = self.get_docids()
@@ -268,6 +274,7 @@ class KLD(TLM):
 
 		@return a 2D dictionary of KLDs in format {docid:{daterange: .. } .. }
 		"""
+
 		print 'Computing KL-Divergence...'
 		klddict = {}
 		docids = self.get_docids()
@@ -343,11 +350,13 @@ class RunTLM(object):
 		for outc, tfc in zip(self.outcs, self.tfcs):
 			KLD(self.datec, tfc, outc).run()
 
+
 	def run_cs(self):
 		"""Run CS"""
 		print 'Generate CS...'
 		for outc, tfc in zip(self.outcs, self.tfcs):
 			CS(self.datec, tfc, outc).run()
+
 
 	def run_ocr(self):
 		"""Run OCR (NLLR based on character language model)"""
@@ -356,9 +365,36 @@ class RunTLM(object):
 
 
 
-if __name__ == '__main__':
-	RunTLM(['nllr_1', 'nllr_2', 'nllr_3']).run_nllr()
-	RunTLM(['kld_1', 'kld_2', 'kld_3']).run_kld()
-	RunTLM(['cs_1', 'cs_2', 'cs_3']).run_cs()
-	RunTLM(['nllr_ocr']).run_ocr()
+# Feature extraction jobs
+def job1(): RunTLM(['nllr_1', 'nllr_2', 'nllr_3']).run_nllr()
+def job2(): RunTLM(['kld_1', 'kld_2', 'kld_3']).run_kld()
+def job3(): RunTLM(['cs_1', 'cs_2', 'cs_3']).run_cs()
+def job4(): RunTLM(['nllr_ocr']).run_ocr()
 
+
+def run_parallel():
+	"""Run jobs in parallel, may need at least 8gb memory"""
+	from multiprocessing import Pool
+	pool = Pool()
+	result1 = pool.apply_async(job1, [])
+	result2 = pool.apply_async(job2, [])
+	result3 = pool.apply_async(job3, [])
+	result4 = pool.apply_async(job4, [])
+	result1.get()
+	result2.get() 
+	result3.get()
+	result4.get()
+
+
+def run_serial():
+	"""Run jobs in serial, 2gb memory should be enough"""
+	job1()
+	job2()
+	job3()
+	job4()
+
+
+
+if __name__ == '__main__':
+	# run_serial()
+	run_parallel()
