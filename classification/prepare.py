@@ -67,6 +67,7 @@ class Data(object):
 		Retrieve and append date features, including first-date-in-text and 
 		date-distribution-in-text.
 		"""
+		print 'Adding date features...'
 		docs = list(self.datec.find({u"distribution":{"$exists":1}}, 
 								 {u"firstraw":0, "raw":0, "range":0}))
 		# The list comprehesion below flattens subdocument 'distribution' out 
@@ -111,29 +112,29 @@ class Data(object):
 		"""
 		Retrieve and append TE-weighted-normalized-log-likelihood-ratio features
 		"""
+		print 'Adding TE-weighted-normalized-log-likelihood-ratio features...'
 		self.add_text_features(['nllr_1', 'nllr_2', 'nllr_3'])
-		print 'Add TE-weighted-normalized-log-likelihood-ratio features.'
 	
 	
 	def add_kld_features(self):
 		"""
 		Retrieve and append KL-divergence features
 		"""
+		print 'Adding KL-divergence features...'
 		self.add_text_features(['kld_1', 'kld_2', 'kld_3'])
-		print 'Add KL-divergence features.'
 
 
 	def add_cs_features(self):
 		"""
 		Retrieve and append Cosine-Similarity features
 		"""
+		print 'Adding Cosine-Similarity features...'
 		self.add_text_features(['cs_1', 'cs_2', 'cs_3'])
-		print 'Add Cosine-Similarity features.'
 
 
 	def add_ocr_features(self):
 		"""
 		Retrieve and append OCR features
 		"""
+		print 'Adding OCR features...'
 		self.add_text_features(['nllr_ocr'])
-		print 'Add OCR features.'
