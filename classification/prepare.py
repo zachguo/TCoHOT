@@ -90,19 +90,27 @@ class Data(object):
 		self.set_data(data)
 
 
-	def add_text_features(self, featurecnames):
+	def add_text_features(self, featurecnames, scaling=False):
 		"""
 		Retrieve and append text-related features
 
 		@param featurecnames, a list of names of text-related feature collections
+		@param scaling, whether or not to normalize feature. Classification results 
+		                after scaling are worse, so it's set as False by default.
 		"""
 		data = self.get_data()
 		for featurecname in featurecnames:
+			print '  - Adding', featurecname
 			featurec = self.db[featurecname]
 			feature = pd.DataFrame.from_dict(
 				{doc.pop("_id"):doc for doc in featurec.find({})}, orient='index'
 				)
 			feature.rename(columns=lambda x: x+'-'+featurecname, inplace=True)
+			if scaling:
+				# normalize feature to a [-1, 1] range
+				# scaling is based on matrix of a feature group rather than column
+				rng = feature.max().max() - feature.min().min()
+				feature = (feature - rng) / rng
 			# Inner join data and feature
 			data = data.merge(feature, how='inner', left_on="_id", right_index=True)
 		self.set_data(data)
@@ -113,7 +121,7 @@ class Data(object):
 		Retrieve and append TE-weighted-normalized-log-likelihood-ratio features
 		"""
 		print 'Adding TE-weighted-normalized-log-likelihood-ratio features...'
-		self.add_text_features(['nllr_1', 'nllr_2', 'nllr_3'])
+		self.add_text_features(['nllr_1', 'nllr_2', 'nllr_3', 'nllr_ocr'])
 	
 	
 	def add_kld_features(self):
@@ -121,7 +129,7 @@ class Data(object):
 		Retrieve and append KL-divergence features
 		"""
 		print 'Adding KL-divergence features...'
-		self.add_text_features(['kld_1', 'kld_2', 'kld_3'])
+		self.add_text_features(['kld_1', 'kld_2', 'kld_3', 'kld_ocr'])
 
 
 	def add_cs_features(self):
@@ -129,12 +137,4 @@ class Data(object):
 		Retrieve and append Cosine-Similarity features
 		"""
 		print 'Adding Cosine-Similarity features...'
-		self.add_text_features(['cs_1', 'cs_2', 'cs_3'])
-
-
-	def add_ocr_features(self):
-		"""
-		Retrieve and append OCR features
-		"""
-		print 'Adding OCR features...'
-		self.add_text_features(['nllr_ocr'])
+		self.add_text_features(['cs_1', 'cs_2', 'cs_3', 'cs_ocr'])
