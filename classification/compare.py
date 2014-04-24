@@ -10,22 +10,92 @@ from scipy.stats import ttest_rel
 from numpy import mean
 from prepare import Data
 from model import BL, LR, DT, SVM, Classifier
+from sklearn.metrics import precision_score, recall_score, f1_score, confusion_matrix
 from itertools import combinations
+import cPickle, os
+
+
 
 def fetch_data():
 	"""Fetch data"""
 	print 'Preparing data for analysis...'
-	datamodel = Data()
-	datamodel.add_date_features()
-	# datamodel.add_ocr_features()
-	datamodel.add_nllr_features()
-	# datamodel.add_kld_features()
-	datamodel.add_cs_features()
-	data = datamodel.get_data()
+	if os.path.exists('data.cache'):
+		print 'Loading data from cache...'
+		with open('data.cache') as fin:
+			data = cPickle.load(fin)
+	else:
+		datamodel = Data()
+		datamodel.add_date_features()
+		datamodel.add_nllr_features()
+		datamodel.add_kld_features()
+		datamodel.add_cs_features()
+		data = datamodel.get_data()
+		with open('data.cache', 'w') as fout:
+			cPickle.dump(data, fout)
 	print 'Data is ready: [{0} rows x {1} columns]'.format(*data.shape)
 	return data
 
 READYDATA = fetch_data()
+
+
+def job_wrapper(clf):
+	model = clf(READYDATA)
+	return model.fit_and_predict()
+
+def repeat(clf, num=10):
+	"""
+	Run the specified model n times, and return the results.
+	@param n, number of repeats
+	@param clf, the classifier to be used.
+	@return results, a list of 2-tuples result [(ypred, ytest), ...]
+	"""
+
+	from multiprocessing import Pool
+	pool = Pool(2)
+	results = pool.map(job_wrapper, [clf] * num)
+	return results # fix this
+
+
+
+def print_cm(cm, labels):
+	"""pretty print for confusion matrixes"""
+	columnwidth = max([len(x) for x in labels])
+	# Print header
+	print " " * columnwidth,
+	for label in labels: 
+		print "%{0}s".format(columnwidth) % label,
+	print
+	# Print rows
+	for i, label1 in enumerate(labels):
+		print "%{0}s".format(columnwidth) % label1,
+		for j in range(len(labels)): 
+			print "%{0}d".format(columnwidth) % cm[i, j],
+		print
+
+def evaluate(results, output_cm=False):
+	"""
+	Take the output of `repeatRun` as input to produce model evaluations.
+	@param results, a list of 2-tuples result [(ypred, ytest), ...]
+	@param output_cm, whether or not print confusion_matrix
+	@return a list of precisions, recalls, f1s
+	"""
+	labels = ["pre-1839", "1840-1860", "1861-1876", "1877-1887", "1888-1895", 
+			"1896-1901", "1902-1906", "1907-1910", "1911-1914", "1915-1918", 
+			"1919-1922", "1923-present"]
+	# Generate precision, recall and f1 scores
+	metrics = [precision_score, recall_score, f1_score]
+	f = lambda m: [m(*pair) for pair in results]
+	precisions, recalls, f1s = [f(m) for m in metrics]
+	# Print confusion matrix
+	if output_cm:
+		cms = [confusion_matrix(*(list(pair)+[labels])) for pair in results]
+		# Get an average confusion matrix, note that 
+		# I use integer division here for readability
+		cm_avg = reduce(lambda x, y: x+y, cms) / len(cms)
+		print_cm(cm_avg, labels)
+	return precisions, recalls, f1s
+
+
 
 def run(clf):
 	"""
@@ -35,10 +105,10 @@ def run(clf):
 	"""
 	if not issubclass(clf, Classifier):
 		raise TypeError("Argument should be an instance of Classifier class.")
-	model = clf(READYDATA)
-	print "Running %s..." % str(model)
-	model.repeat(100)
-	return model.evaluate()
+	print "Running %s..." % str(clf)
+	return evaluate(repeat(clf))
+
+
 
 def ttest(prf1, prf2):
 	"""
@@ -59,6 +129,8 @@ def ttest(prf1, prf2):
 	print 'Precision - Paired t-test: t={0}, p={1}'.format(*ttest_rel(p1, p2))
 	print 'Recall    - Paired t-test: t={0}, p={1}'.format(*ttest_rel(r1, r2))
 	print 'F-score   - Paired t-test: t={0}, p={1}'.format(*ttest_rel(f1, f2))
+
+
 
 def compare(clf1, clf2):
 	"""
@@ -86,4 +158,6 @@ def compare_all():
 		print
 
 if __name__ == '__main__':
-	compare_all()
+	# compare_all()
+	# READYDATA.to_csv('data.csv')
+	print run(LR)

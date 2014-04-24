@@ -10,27 +10,6 @@ from random import sample
 from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.svm import SVC # We can also try other types of SVMs
-from sklearn.metrics import precision_score, recall_score, f1_score, confusion_matrix
-
-
-LABELS = ["pre-1839", "1840-1860", "1861-1876", "1877-1887", "1888-1895", 
-		  "1896-1901", "1902-1906", "1907-1910", "1911-1914", "1915-1918", 
-		  "1919-1922", "1923-present"]
-
-def print_cm(cm, labels):
-	"""pretty print for confusion matrixes"""
-	columnwidth = max([len(x) for x in labels])
-	# Print header
-	print " " * columnwidth,
-	for label in labels: 
-		print "%{0}s".format(columnwidth) % label,
-	print
-	# Print rows
-	for i, label1 in enumerate(labels):
-		print "%{0}s".format(columnwidth) % label1,
-		for j in range(len(labels)): 
-			print "%{0}d".format(columnwidth) % cm[i, j],
-		print
 
 
 class Classifier(object):
@@ -40,19 +19,14 @@ class Classifier(object):
 	"""
 
 	def __init__(self, data):
-		self.data = data
-		self.results = []
+		self.xtrain, self.ytrain, self.xtest, self.ytest = self.sample_and_split(data)
 
-	def get_data(self):
-		"""Non-intrusive interface for data"""
-		return self.data
-
-	def sample_and_split(self):
+	@staticmethod
+	def sample_and_split(data):
 		"""
 		Randomly sample 4/5 as training data, rest as testing data, then
 		split each dataset into features(X) and outcomes(y)
 	 	"""
-	 	data = self.get_data()
 		i_sampled = sample(data.index, len(data.index)*4/5)
 		train = data.ix[i_sampled]
 		test = data.drop(i_sampled)
@@ -61,37 +35,10 @@ class Classifier(object):
 		xtest, ytest = test[features], list(test['range'])
 		return xtrain, ytrain, xtest, ytest
 
-	def fit_and_predict(self, xtrain, ytrain, xtest, ytest):
+	def fit_and_predict(self):
 		"""Placeholder for 'fit_and_predict' method"""
 		raise NotImplementedError("'fit_and_predict' method isn't implemented.")
 
-	def repeat(self, num=10):
-		"""
-		Run the specified model n times, and return the results.
-		@param n, number of repeats
-		@param model, the model to be used.
-		@return results, a list of 2-tuples result [(ypred, ytest), ...]
-		"""
-		self.results = [tuple(self.fit_and_predict(*self.sample_and_split())) for i in range(num)]
-
-	def evaluate(self, output_cm=False):
-		"""
-		Take the output of `repeatRun` as input to produce model evaluations.
-		@param output_cm, whether or not print confusion_matrix
-		@return a list of precisions, recalls, f1s
-		"""
-		# Generate precision, recall and f1 scores
-		metrics = [precision_score, recall_score, f1_score]
-		f = lambda m: [m(*pair) for pair in self.results]
-		precisions, recalls, f1s = [f(m) for m in metrics]
-		# Print confusion matrix
-		if output_cm:
-			cms = [confusion_matrix(*(list(pair)+[LABELS])) for pair in self.results]
-			# Get an average confusion matrix, note that 
-			# I use integer division here for readability
-			cm_avg = reduce(lambda x, y: x+y, cms) / len(cms)
-			print_cm(cm_avg, LABELS)
-		return precisions, recalls, f1s
 
 class BL(Classifier):
 	"""Baseline (Pick 'firstrange' as prediction)"""
@@ -99,14 +46,15 @@ class BL(Classifier):
 	def __repr__(self):
 		return "Baseline"
 
-	def fit_and_predict(self, xtrain, ytrain, xtest, ytest):
+	def fit_and_predict(self):
+		xtest = self.xtest
 		featurelabels = [x for x in xtest.columns if x.endswith('-1st')]
 		if not featurelabels:
-			raise ValueError('Baseline model requires date features, but date features don\'t exist')
+			raise ValueError('Required date features don\'t exist')
 		xtest = xtest[featurelabels]
 		true_colname = lambda x: xtest.columns[(x == True).tolist().index(True)][:-4]
 		ypred = xtest.apply(true_colname, axis=1).tolist()
-		return ytest, ypred
+		return self.ytest, ypred
 
 class LR(Classifier):
 	"""Logistic Regression (one-vs-all)"""
@@ -114,11 +62,11 @@ class LR(Classifier):
 	def __repr__(self):
 		return "Logistic Regression"
 
-	def fit_and_predict(self, xtrain, ytrain, xtest, ytest):
+	def fit_and_predict(self):
 		model = LogisticRegression()
-		model.fit(xtrain, ytrain)
-		ypred = model.predict(xtest)
-		return ytest, ypred
+		model.fit(self.xtrain, self.ytrain)
+		ypred = model.predict(self.xtest)
+		return self.ytest, ypred
 
 class SVM(Classifier):
 	"""Support Vector Machine (one-vs-one)"""
@@ -126,11 +74,11 @@ class SVM(Classifier):
 	def __repr__(self):
 		return "Support Vector Machine"
 
-	def fit_and_predict(self, xtrain, ytrain, xtest, ytest):
+	def fit_and_predict(self):
 		model = SVC()
-		model.fit(xtrain, ytrain)
-		ypred = model.predict(xtest)
-		return ytest, ypred
+		model.fit(self.xtrain, self.ytrain)
+		ypred = model.predict(self.xtest)
+		return self.ytest, ypred
 
 class DT(Classifier):
 	"""Decision Tree"""
@@ -138,8 +86,8 @@ class DT(Classifier):
 	def __repr__(self):
 		return "Decision Tree"
 
-	def fit_and_predict(self, xtrain, ytrain, xtest, ytest):
+	def fit_and_predict(self):
 		model = DecisionTreeClassifier()
-		model.fit(xtrain, ytrain)
-		ypred = model.predict(xtest)
-		return ytest, ypred
+		model.fit(self.xtrain, self.ytrain)
+		ypred = model.predict(self.xtest)
+		return self.ytest, ypred

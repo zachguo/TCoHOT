@@ -9,5 +9,6 @@ metadata_processing/output/*
 *.json
 *.xml
 *.pyc
+*.cache
 .DS_Store
 .Rhistory
