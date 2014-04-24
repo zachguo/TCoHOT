@@ -307,11 +307,11 @@ class RunTLM(object):
 	"""
 
 	def __init__(self, outcollections):
-		db = self.connect_mongo(outcollections)
+		db, outcs = self.connect_mongo(outcollections)
 		self.datec = db.date
 		self.tfcs = [db.tf_1, db.tf_2, db.tf_3]
 		self.cfc = db.cf
-		self.outcs = [db[outc] for outc in outcollections]
+		self.outcs = [db[outc] for outc in outcs] if outcs else []
 
 
 	@staticmethod
@@ -320,7 +320,8 @@ class RunTLM(object):
 		Connect to mongo, and check collection status.
 
 		@param outcollections, a list of names of output collections.
-		@return db connection.
+		@return db, connection to database.
+		@return outcs, names of output collections that don't exist.
 		"""
 		client = MongoClient('localhost', 27017)
 		db = client.HTRC
@@ -330,68 +331,71 @@ class RunTLM(object):
 		if missing:
 			raise IOError("Collections '%s' doesn't exist in 'HTRC' database. \
 				Task aborted." % '&'.join(missing))
+		outcs = []
 		for clc in outcollections:
 			if clc in collections: 
-				print "Collection %s already exists in 'HTRC' database. Drop it." % clc
-				db.drop_collection(clc)
-		return db
+				print "Collection %s already exists in 'HTRC' database, skip." % clc
+			else:
+				outcs.append(clc)
+		return db, outcs
 
 
-	def run_nllr(self):
-		"""Run NLLR"""
-		print 'Generate NLLR...'
-		for outc, tfc in zip(self.outcs, self.tfcs):
-			NLLR(self.datec, tfc, outc).run()
+	def run(self, tlm):
+		"""
+		Run.
 
-
-	def run_kld(self):
-		"""Run KLD"""
-		print 'Generate KLD...'
-		for outc, tfc in zip(self.outcs, self.tfcs):
-			KLD(self.datec, tfc, outc).run()
-
-
-	def run_cs(self):
-		"""Run CS"""
-		print 'Generate CS...'
-		for outc, tfc in zip(self.outcs, self.tfcs):
-			CS(self.datec, tfc, outc).run()
-
-
-	def run_ocr(self):
-		"""Run OCR (NLLR based on character language model)"""
-		print 'Generate OCR...'
-		NLLR(self.datec, self.cfc, self.outcs[0]).run()
+		@param tlm, name of model to be used, must be one of 'nllr', 'kld' and 'cs'.
+		"""
+		if tlm == 'nllr':
+			model = NLLR
+		elif tlm == 'kld':
+			model = KLD
+		elif tlm == 'cs':
+			model = CS
+		else:
+			raise ValueError('Invalid TLM name.')
+		if self.outcs:
+			for outc in self.outcs:
+				if outc.name == tlm + '_1':
+					print 'Generate %s_1...' % tlm
+					model(self.datec, self.tfcs[0], outc).run()
+				elif outc.name == tlm + '_2':
+					print 'Generate %s_2...' % tlm
+					model(self.datec, self.tfcs[1], outc).run()
+				elif outc.name == tlm + '_3':
+					print 'Generate %s_3...' % tlm
+					model(self.datec, self.tfcs[2], outc).run()
+				elif outc.name == tlm + '_ocr':
+					print 'Generate %s_ocr...' % tlm
+					model(self.datec, self.cfc, outc).run()
+				else:
+					raise ValueError('Invalid output collection names.')
+		else:
+			print 'All output collections already exists.'
 
 
 
 # Feature extraction jobs
-def job1(): RunTLM(['nllr_1', 'nllr_2', 'nllr_3']).run_nllr()
-def job2(): RunTLM(['kld_1', 'kld_2', 'kld_3']).run_kld()
-def job3(): RunTLM(['cs_1', 'cs_2', 'cs_3']).run_cs()
-def job4(): RunTLM(['nllr_ocr']).run_ocr()
-
+def job1(): RunTLM(['nllr_1', 'nllr_2', 'nllr_3', 'nllr_ocr']).run('nllr')
+def job2(): RunTLM(['kld_1', 'kld_2', 'kld_3', 'kld_ocr']).run('kld')
+def job3(): RunTLM(['cs_1', 'cs_2', 'cs_3', 'cs_ocr']).run('cs')
 
 def run_parallel():
 	"""Run jobs in parallel, may need at least 8gb memory"""
 	from multiprocessing import Pool
-	pool = Pool()
+	pool = Pool(2)
 	result1 = pool.apply_async(job1, [])
 	result2 = pool.apply_async(job2, [])
 	result3 = pool.apply_async(job3, [])
-	result4 = pool.apply_async(job4, [])
 	result1.get()
-	result2.get() 
+	result2.get()
 	result3.get()
-	result4.get()
-
 
 def run_serial():
 	"""Run jobs in serial, 2gb memory should be enough"""
 	job1()
 	job2()
 	job3()
-	job4()
 
 
 
