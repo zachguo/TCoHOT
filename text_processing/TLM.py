@@ -9,7 +9,7 @@ Siyuan Guo, Apr 2014
 from pymongo import MongoClient
 from collections import defaultdict
 from math import log, log10, sqrt
-from utils import reshape
+from utils import reshape, fakedict
 import pandas as pd
 
 
@@ -33,12 +33,13 @@ class TLM(object):
 		            HTRC mongo database.
 	"""
 
-	def __init__(self, datec, tfc):
+	def __init__(self, datec, tfc, weighted=True):
 		self.datec = datec
 		self.tfc = tfc
 		self.rtmatrix = pd.DataFrame()
 		self.docids = []
 		self.generate_rtmatrix()
+		self.tedict = self.compute_te(self.get_rtmatrix()) if weighted else fakedict()
 
 
 	def get_rtmatrix(self):
@@ -111,6 +112,25 @@ class TLM(object):
 		self.set_docids(reduce(lambda x, y: x+y, dr_docid_dict.values()))
 
 
+	@staticmethod
+	def compute_te(rtmatrix):
+		"""
+		Compute temporal entropy for each term.
+
+		@param rtmatrix, a pandas dataframe representing term * daterange matrix.
+		@return a dictionary of temporal entropies (term as key):
+		        {u'murwara': 0.9999989777855017, 
+		         u'fawn': 0.8813360127166802,
+		         ... }
+		"""
+
+		# Normalize each row from freq to prob
+		rtmatrix = rtmatrix.div(rtmatrix.sum(axis=1), axis=0)
+		# compute temporal entropy and return it, 12 is number of chronons.
+		rtmatrix = rtmatrix.applymap(lambda x: x*log(x)).sum(axis=1)
+		return rtmatrix.apply(lambda e: 1+1/log(12)*e).to_dict()
+
+
 
 class NLLR(TLM):
 	"""
@@ -125,8 +145,8 @@ class NLLR(TLM):
 					to store NLLR results.
 	"""
 
-	def __init__(self, datec, tfc, nllrc):
-		TLM.__init__(self, datec, tfc)
+	def __init__(self, datec, tfc, nllrc, weighted=True):
+		TLM.__init__(self, datec, tfc, weighted)
 		self.nllrc = nllrc
 
 
@@ -148,27 +168,8 @@ class NLLR(TLM):
 		llrmatrix = tfdaterange.div(tfcorpora, axis=0).applymap(log)
 		return llrmatrix.to_dict()
 
-		
-	@staticmethod
-	def compute_te(rtmatrix):
-		"""
-		Compute temporal entropy for each term.
 
-		@param rtmatrix, a pandas dataframe representing term * daterange matrix.
-		@return a dictionary of temporal entropies (term as key):
-		        {u'murwara': 0.9999989777855017, 
-		         u'fawn': 0.8813360127166802,
-		         ... }
-		"""
-
-		# Normalize each row from freq to prob
-		rtmatrix = rtmatrix.div(rtmatrix.sum(axis=1), axis=0)
-		# compute temporal entropy and return it, 12 is number of chronons.
-		rtmatrix = rtmatrix.applymap(lambda x: x*log(x)).sum(axis=1)
-		return rtmatrix.apply(lambda e: 1+1/log(12)*e).to_dict()
-
-
-	def compute_nllr(self, weighted=True):
+	def compute_nllr(self):
 		"""
 		Compute normalized log likelihood ratio, using deJong/Rode/Hiemstra 
 		Temporal Language Model, with a option of weighting by temporal 
@@ -181,7 +182,6 @@ class NLLR(TLM):
 		print 'Computing TEwNLLR...'
 		nllrdict = {}
 		llrdict = self.compute_llr(self.get_rtmatrix())
-		tedict = self.compute_te(self.get_rtmatrix()) if weighted else {}
 		docids = self.get_docids()
 		# read p(w|d) from MongoDB ('prob' field in tf_n collections)
 		for docid in docids:
@@ -190,7 +190,7 @@ class NLLR(TLM):
 				probs = tfdoc[u"prob"]
 				nllrdict[docid] = {}
 				for daterange in DATERANGES:
-					nllrdict[docid][daterange] = sum([tedict[term] * probs[term] * llrdict[daterange][term] for term in probs])
+					nllrdict[docid][daterange] = sum([self.tedict[term] * probs[term] * llrdict[daterange][term] for term in probs])
 		return nllrdict
 
 
@@ -211,8 +211,8 @@ class CS(TLM):
 					to store Cos-Sim results.
 	"""
 	
-	def __init__(self, datec, tfc, csc):
-		TLM.__init__(self, datec, tfc)
+	def __init__(self, datec, tfc, csc, weighted=True):
+		TLM.__init__(self, datec, tfc, weighted)
 		self.csc = csc
 
 
@@ -241,7 +241,7 @@ class CS(TLM):
 				# a vector of which each cell is the vector length for a doc
 				dvlength = sqrt(sum([x*x for x in probs.values()]))
 				for daterange in DATERANGES:
-					cossim = sum([probs[term] * rtmatrix[daterange][term] for term in probs]) / (dvlength * rvlength[daterange])
+					cossim = sum([self.tedict[term] * probs[term] * rtmatrix[daterange][term] for term in probs]) / (dvlength * rvlength[daterange])
 					csdict[docid][daterange] = cossim if cossim >= -1 and cossim <= 1 else 0
 		return csdict
 
@@ -263,8 +263,8 @@ class KLD(TLM):
 					to store KL Divergence results.
 	"""
 
-	def __init__(self, datec, tfc, kldc):
-		TLM.__init__(self, datec, tfc)
+	def __init__(self, datec, tfc, kldc, weighted=True):
+		TLM.__init__(self, datec, tfc, weighted)
 		self.kldc = kldc
 
 
@@ -287,7 +287,7 @@ class KLD(TLM):
 				probs = tfdoc[u"prob"]
 				klddict[docid] = {}
 				for daterange in DATERANGES:
-					klddict[docid][daterange] = sum([probs[term] * log10(probs[term]/rtmatrix[daterange][term]) for term in probs])
+					klddict[docid][daterange] = sum([self.tedict[term] * probs[term] * log10(probs[term]/rtmatrix[daterange][term]) for term in probs])
 		return klddict
 
 
@@ -340,7 +340,7 @@ class RunTLM(object):
 		return db, outcs
 
 
-	def run(self, tlm):
+	def run(self, tlm, weighted=True):
 		"""
 		Run.
 
@@ -358,32 +358,33 @@ class RunTLM(object):
 			for outc in self.outcs:
 				if outc.name == tlm + '_1':
 					print 'Generate %s_1...' % tlm
-					model(self.datec, self.tfcs[0], outc).run()
+					model(self.datec, self.tfcs[0], outc, weighted).run()
 				elif outc.name == tlm + '_2':
 					print 'Generate %s_2...' % tlm
-					model(self.datec, self.tfcs[1], outc).run()
+					model(self.datec, self.tfcs[1], outc, weighted).run()
 				elif outc.name == tlm + '_3':
 					print 'Generate %s_3...' % tlm
-					model(self.datec, self.tfcs[2], outc).run()
+					model(self.datec, self.tfcs[2], outc, weighted).run()
 				elif outc.name == tlm + '_ocr':
 					print 'Generate %s_ocr...' % tlm
-					model(self.datec, self.cfc, outc).run()
+					model(self.datec, self.cfc, outc, weighted).run()
 				else:
 					raise ValueError('Invalid output collection names.')
 		else:
-			print 'All output collections already exists.'
+			print 'All %s output collections already exists.' % tlm
 
 
 
 # Feature extraction jobs
-def job1(): RunTLM(['nllr_1', 'nllr_2', 'nllr_3', 'nllr_ocr']).run('nllr')
-def job2(): RunTLM(['kld_1', 'kld_2', 'kld_3', 'kld_ocr']).run('kld')
-def job3(): RunTLM(['cs_1', 'cs_2', 'cs_3', 'cs_ocr']).run('cs')
+WEIGHTED = False
+def job1(): RunTLM(['nllr_1', 'nllr_2', 'nllr_3', 'nllr_ocr']).run('nllr', WEIGHTED)
+def job2(): RunTLM(['kld_1', 'kld_2', 'kld_3', 'kld_ocr']).run('kld', WEIGHTED)
+def job3(): RunTLM(['cs_1', 'cs_2', 'cs_3', 'cs_ocr']).run('cs', WEIGHTED)
 
 def run_parallel():
 	"""Run jobs in parallel, may need at least 8gb memory"""
 	from multiprocessing import Pool
-	pool = Pool(2)
+	pool = Pool(3)
 	result1 = pool.apply_async(job1, [])
 	result2 = pool.apply_async(job2, [])
 	result3 = pool.apply_async(job3, [])

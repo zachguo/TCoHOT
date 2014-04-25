@@ -47,3 +47,7 @@ def reshape(dict2d):
 	"""
 	return [dict(dict2d[d], **{u"_id":d}) for d in dict2d]
 	
+class fakedict(object):
+	"""Behave like `defaultdict(lambda:1.0)` without wasting memory to save item"""
+	def __getitem__(self, key):
+		return 1.0
