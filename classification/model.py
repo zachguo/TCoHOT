@@ -43,8 +43,8 @@ class Classifier(object):
 class BL(Classifier):
 	"""Baseline (Pick 'firstrange' as prediction)"""
 
-	def __repr__(self):
-		return "Baseline"
+	NAME = "Baseline"
+	LABEL = "BL"
 
 	def fit_and_predict(self):
 		xtest = self.xtest
@@ -59,8 +59,8 @@ class BL(Classifier):
 class LR(Classifier):
 	"""Logistic Regression (one-vs-all)"""
 
-	def __repr__(self):
-		return "Logistic Regression"
+	NAME = "Logistic Regression"
+	LABEL = "LR"
 
 	def fit_and_predict(self):
 		model = LogisticRegression()
@@ -71,8 +71,8 @@ class LR(Classifier):
 class SVM(Classifier):
 	"""Linear Support Vector Machine (one-vs-one)"""
 
-	def __repr__(self):
-		return "Support Vector Machine"
+	NAME = "Support Vector Machine"
+	LABEL = "SVM"
 
 	def fit_and_predict(self):
 		model = LinearSVC()
@@ -83,8 +83,8 @@ class SVM(Classifier):
 class DT(Classifier):
 	"""Decision Tree"""
 
-	def __repr__(self):
-		return "Decision Tree"
+	NAME = "Decision Tree"
+	LABEL = "DT"
 
 	def fit_and_predict(self):
 		model = DecisionTreeClassifier()
