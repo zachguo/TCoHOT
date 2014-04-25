@@ -6,18 +6,23 @@ Compares performances of different classifiers.
 Siyuan Guo, Apr 2014
 """
 
-from scipy.stats import ttest_rel
-from numpy import mean
 from prepare import Data
 from model import BL, LR, DT, SVM
 from sklearn.metrics import precision_score, recall_score, f1_score, confusion_matrix
-from itertools import combinations
+# from scipy.stats import ttest_rel
+from pandas import DataFrame
 import cPickle, os
 
 
 
+####################
+# Helper Functions #
+####################
+
 def fetch_data():
-	"""Fetch data"""
+	"""
+	Fetch data into a dataframe.
+	"""
 	print 'Preparing data for analysis...'
 	if os.path.exists('data.cache'):
 		print 'Loading data from cache...'
@@ -35,13 +40,35 @@ def fetch_data():
 	print 'Data is ready: [{0} rows x {1} columns]'.format(*data.shape)
 	return data
 
+def print_cm(confmat, labels):
+	"""
+	Pretty print for confusion matrixes, used by `get_prf` function.
+	"""
+	columnwidth = max([len(x) for x in labels])
+	# Print header
+	print " " * columnwidth,
+	for label in labels: 
+		print "%{0}s".format(columnwidth) % label,
+	print
+	# Print rows
+	for i, label1 in enumerate(labels):
+		print "%{0}s".format(columnwidth) % label1,
+		for j in range(len(labels)): 
+			print "%{0}d".format(columnwidth) % confmat[i, j],
+		print
 
+
+
+#############
+# Constants #
+#############
 
 READYDATA = fetch_data()
 METRICS = ['nllr', 'kld', 'cs']
 DATERANGES = [u"pre-1839", u"1840-1860", u"1861-1876", u"1877-1887", 
 			  u"1888-1895", u"1896-1901", u"1902-1906", u"1907-1910", 
 			  u"1911-1914", u"1915-1918", u"1919-1922", u"1923-present"]
+DVCOL = [u'range']
 DATECOLS = DATERANGES + [l+'-1st' for l in DATERANGES]
 OCRCOLS = {m:[l+'-'+m+'_ocr' for l in DATERANGES] for m in METRICS}
 UNICOLS = {m:[l+'-'+m+'_1' for l in DATERANGES] for m in METRICS}
@@ -50,9 +77,13 @@ TRICOLS = {m:[l+'-'+m+'_3' for l in DATERANGES] for m in METRICS}
 
 
 
+########################
+# Evaluate Classifiers #
+########################
+
 def job_wrapper(args):
 	"""
-	Wrapper for a parallel job.
+	Wrapper for a parallel job, used by `repeat` function.
 	@param args, a 2-tuple of clf and columns.
 	"""
 	clf, columns = args
@@ -70,24 +101,9 @@ def repeat(clf, columns, num=10):
 	from multiprocessing import Pool
 	pool = Pool(2)
 	results = pool.map(job_wrapper, [[clf, columns]] * num)
-	return results # fix this
+	return results
 
-def print_cm(cm, labels):
-	"""pretty print for confusion matrixes"""
-	columnwidth = max([len(x) for x in labels])
-	# Print header
-	print " " * columnwidth,
-	for label in labels: 
-		print "%{0}s".format(columnwidth) % label,
-	print
-	# Print rows
-	for i, label1 in enumerate(labels):
-		print "%{0}s".format(columnwidth) % label1,
-		for j in range(len(labels)): 
-			print "%{0}d".format(columnwidth) % cm[i, j],
-		print
-
-def evaluate(results, output_cm=False):
+def get_prf(results, output_cm=False):
 	"""
 	Take the output of `repeatRun` as input to produce model evaluations.
 	@param results, a list of 2-tuples result [(ypred, ytest), ...]
@@ -107,92 +123,76 @@ def evaluate(results, output_cm=False):
 		print_cm(cm_avg, DATERANGES)
 	return precisions, recalls, f1s
 
-def run(clf, columns):
-	"""
-	Run a classifier.
-	@param clf, a classifier, one of BL, LR, DT and SVM.
-	@param columns, the columns to be used in data.
-	@return precision, recall and f1 scores.
-	"""
-	print " Running %s..." % str(clf)
-	return evaluate(repeat(clf, columns, 2))
 
 
+class Evaluation(object):
+	"""
+	Generate evaluation results to be used in the paper.
+	"""
 
-def ttest(prf1, prf2):
-	"""
-	Run t-test to compare means
+	def __init__(self):
+		self.results = DataFrame()
 
-	@param prf1, a 3-tuple: precision, recall and fscore of a classifier.
-	@param prf2, a 3-tuple: precision, recall and fscore of another classifier.
-	"""
-	p1,r1,f1 = prf1
-	p2,r2,f2 = prf2
-	# show means
-	print
-	print '    Precision means: ', mean(p1), mean(p2)
-	print '    Recall    means: ', mean(r1), mean(r2)
-	print '    F-scores  means: ', mean(f1), mean(f2)
-	# compare model performance using paired t-test
-	print '    Precision - Paired t-test: t={0}, p={1}'.format(*ttest_rel(p1, p2))
-	print '    Recall    - Paired t-test: t={0}, p={1}'.format(*ttest_rel(r1, r2))
-	print '    F-score   - Paired t-test: t={0}, p={1}'.format(*ttest_rel(f1, f2))
+	def eval_date(self):
+		"""
+		Compare 4 classifiers x only date features.
+		"""
+		columns = DVCOL + DATECOLS
+		for clf in (BL, LR, DT, SVM):
+			print '  Use %s classifier...' % clf.NAME
+			prfs_named = zip(('p', 'r', 'f'), get_prf(repeat(clf, columns)))
+			for sname, scores in prfs_named:
+				col_label = '_'.join([sname, clf.LABEL, 'd'])
+				self.results[col_label] = scores
 
-def compare_pairs(pairs):
-	"""
-	Compare pairs of performances.
+	def eval_text(self, addon=('', [])):
+		"""
+		Compare 3 classifiers x 3 metrics x only text features.
+		@param addon, default as ('', []), or receive a (('d', DATECOLS)), for
+		              refactoring `eval_date_n_text` method.
+		"""
+		for m in METRICS:
+			print '  Use %s metric...' % m
+			for clf in (LR, DT, SVM):
+				print '    Use %s classifier...' % clf.NAME
+				features = (
+					DVCOL + OCRCOLS[m], 
+					DVCOL + OCRCOLS[m] + UNICOLS[m],
+					DVCOL + OCRCOLS[m] + UNICOLS[m] + BICOLS[m],
+					DVCOL + OCRCOLS[m] + UNICOLS[m] + BICOLS[m] + TRICOLS[m]
+					)
+				features = [x+addon[1] for x in features]
+				fnames = [x+addon[0] for x in ('o', 'ou', 'oub', 'oubt')]
+				features_named = zip(fnames, features)
+				for fname, columns in features_named:
+					print '      Use %s feature set...' % fname
+					prfs_named = zip(('p', 'r', 'f'), get_prf(repeat(clf, columns)))
+					for sname, scores in prfs_named:
+						col_label = '_'.join([sname, clf.LABEL, m, fname])
+						self.results[col_label] = scores
 
-	@param pairs, a list of 2-tuples (name, a list of p/r/f scores).
-	"""
-	for pair1, pair2 in combinations(pairs, 2):
-		name1, prf1 = pair1
-		name2, prf2 = pair2
-		print '  Compare {0} and {1} models:'.format(name1, name2)
-		ttest(prf1, prf2)
-		print
-	
-def eval_date():
-	"""
-	Compare performances of 4 classifiers with only date features.
-	"""
-	columns = [u'range'] + DATECOLS
-	pairs = zip(
-		['BL', 'LR', 'DT', 'SVM'], 
-		[run(clf, columns) for clf in BL, LR, DT, SVM]
-		)
-	compare_pairs(pairs)
+	def eval_date_n_text(self):
+		"""
+		Compare 3 classifiers x 3 metrics x both date and text features.
+		"""
+		self.eval_text(('d', DATECOLS))
 
-def eval_text(addon=[]):
-	"""
-	Compare performances of 3 classifiers with only text features.
-	"""
-	for m in METRICS:
-		print '\nUse %s metric...' % m
-		for clf in [LR, DT, SVM]:
-			print 'Use %s classifier...' % str(clf)
-			incremental_features = [
-				[u'range'] + OCRCOLS[m], 
-				[u'range'] + OCRCOLS[m] + UNICOLS[m],
-				[u'range'] + OCRCOLS[m] + UNICOLS[m] + BICOLS[m],
-				[u'range'] + OCRCOLS[m] + UNICOLS[m] + BICOLS[m] + TRICOLS[m]
-				]
-			incremental_features = [x+addon for x in incremental_features]
-			pairs = zip(
-				['ocr', 'ocr+uni', 'ocr+uni+bi', 'ocr+uni+bi+tri'], 
-				[run(clf, columns) for columns in incremental_features]
-				)
-			compare_pairs(pairs)
-
-def eval_date_n_text():
-	"""
-	Compare performances of 3 classifiers with both date and text features.
-	"""
-	eval_text(DATECOLS)
+	def run(self, output=True):
+		"""
+		Run all evaluations.
+		@param output, whether or not to output results as a csv file, default True.
+		"""
+		print '\nCompare 4 classifiers x only date features.'
+		self.eval_date()
+		print '\nCompare 3 classifiers x 3 metrics x only text features.'
+		self.eval_text()
+		print '\nCompare 3 classifiers x 3 metrics x both date and text features.'
+		self.eval_date_n_text()
+		if output:
+			self.results.to_csv('results.csv')
 
 
 
 if __name__ == '__main__':
 	# READYDATA.to_csv('data.csv')
-	# eval_date()
-	# eval_text()
-	eval_date_n_text()
+	Evaluation().run()
