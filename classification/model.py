@@ -9,7 +9,7 @@ All classifiers are implemented in this module.
 from random import sample
 from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.svm import SVC # We can also try other types of SVMs
+from sklearn.svm import LinearSVC
 
 
 class Classifier(object):
@@ -69,13 +69,13 @@ class LR(Classifier):
 		return self.ytest, ypred
 
 class SVM(Classifier):
-	"""Support Vector Machine (one-vs-one)"""
+	"""Linear Support Vector Machine (one-vs-one)"""
 
 	def __repr__(self):
 		return "Support Vector Machine"
 
 	def fit_and_predict(self):
-		model = SVC()
+		model = LinearSVC()
 		model.fit(self.xtrain, self.ytrain)
 		ypred = model.predict(self.xtest)
 		return self.ytest, ypred
