@@ -4,7 +4,7 @@
 This module generate term-frequencies, document-frequencies and 
 character-frequencies from MapReduce TF output, then import generated 
 TF, DF & CF into MongoDB as seven collections: 
-    'tf_1', 'tf_2', 'tf_3', 'df_1', 'df_2', 'df_3', 'cf'
+    'tf_1', 'tf_2', 'tf_3', 'df_1', 'df_2', 'df_3', 'tf_ocr'
 
 To run: 
     python importTFDF.py /path/to/tf_aa.txt
@@ -29,7 +29,7 @@ def import2mongo(filepath):
     client = MongoClient('localhost', 27017)
     db = client.HTRC
     collections = db.collection_names()
-    for c in ['tf_1', 'tf_2', 'tf_3', 'df_1', 'df_2', 'df_3', 'cf']:
+    for c in ['tf_1', 'tf_2', 'tf_3', 'df_1', 'df_2', 'df_3', 'tf_ocr']:
         if c in collections: 
             print "Collection %s already exists in 'HTRC' database. Drop it." % c
             db.drop_collection(c)
@@ -58,7 +58,7 @@ def import2mongo(filepath):
                         db.tf_1.insert(tf_uni)
                         db.tf_2.insert(tf_bi)
                         db.tf_3.insert(tf_tri)
-                        db.cf.insert(chardoclist)
+                        db.tf_ocr.insert(chardoclist)
                         # clear memory & count
                         tf_uni, tf_bi, tf_tri = [], [], []
                         chardoclist = []
@@ -87,7 +87,7 @@ def import2mongo(filepath):
         db.tf_1.insert(tf_uni)
         db.tf_2.insert(tf_bi)
         db.tf_3.insert(tf_tri)
-        db.cf.insert(chardoclist)
+        db.tf_ocr.insert(chardoclist)
 
     # save df (document frequencies) to collections ('df_1','df_2','df_3')
     db.df_1.insert(reshape(dfdict_uni))

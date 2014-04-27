@@ -280,7 +280,7 @@ class TLM(object):
 class RunTLM(object):
 	"""
 	Run various computation based on TLM and save results to mongoDB.
-	Collections 'date','tf_1','tf_2','tf_3','cf' must exist in mongoDB 
+	Collections 'date','tf_1','tf_2','tf_3','tf_ocr' must exist in mongoDB 
 	before execution.
 
 	@param outcollections, a list of names of output collections.
@@ -289,8 +289,7 @@ class RunTLM(object):
 	def __init__(self, outcollections):
 		db, outcs = self.connect_mongo(outcollections)
 		self.datec = db.date
-		self.tfcs = [db.tf_1, db.tf_2, db.tf_3]
-		self.cfc = db.cf
+		self.tfcs = [db.tf_1, db.tf_2, db.tf_3, db.tf_ocr]
 		self.outcs = [db[outc] for outc in outcs] if outcs else []
 
 
@@ -306,7 +305,7 @@ class RunTLM(object):
 		client = MongoClient('localhost', 27017)
 		db = client.HTRC
 		collections = db.collection_names()
-		musthave = ['date', 'tf_1', 'tf_2', 'tf_3', 'cf']
+		musthave = ['date', 'tf_1', 'tf_2', 'tf_3', 'tf_ocr']
 		missing = set(musthave) - set(collections)
 		if missing:
 			raise IOError("Collections '%s' doesn't exist in 'HTRC' database. \
@@ -336,7 +335,7 @@ class RunTLM(object):
 				elif postfix == '3':
 					model = TLM(self.datec, self.tfcs[2], weighted)
 				elif postfix == 'ocr':
-					model = TLM(self.datec, self.cfc, weighted)
+					model = TLM(self.datec, self.tfcs[-1], weighted)
 				else:
 					raise ValueError('Invalid output collection names.')
 				for outc in outcs:
