@@ -8,6 +8,7 @@ Siyuan Guo, Apr 2014
 
 from pymongo import MongoClient
 from collections import defaultdict
+from itertools import groupby
 from math import log, log10, sqrt
 from utils import reshape, fakedict
 import pandas as pd
@@ -30,7 +31,8 @@ class TLM(object):
 
 	@param datec, connection to date collection in HTRC mongo database.
 	@param tfc, connection to one of 'tf_1', 'tf_2' and 'tf_3' collections in 
-		            HTRC mongo database.
+	            HTRC mongo database.
+	@param weighted, whether or not weighted by temporal entropy.
 	"""
 
 	def __init__(self, datec, tfc, weighted=True):
@@ -101,8 +103,8 @@ class TLM(object):
 					# merge & sum term frequencies for each date range
 					for term in tfdict:
 						dr_tf_dict[daterange][term] += tfdict[term]
-				else:
-					print "Warning: no term frequency for doc %s." % docid
+				# else:
+				# 	print "Warning: no term frequency for doc %s." % docid
 
 		# Convert 2D dictionary into pandas dataframe (named matrix), with a simple
 		rtmatrix = pd.DataFrame(dr_tf_dict).fillna(EPSILON)
@@ -124,30 +126,12 @@ class TLM(object):
 		         ... }
 		"""
 
+		print "Generating temporal entropy..."
 		# Normalize each row from freq to prob
 		rtmatrix = rtmatrix.div(rtmatrix.sum(axis=1), axis=0)
 		# compute temporal entropy and return it, 12 is number of chronons.
 		rtmatrix = rtmatrix.applymap(lambda x: x*log(x)).sum(axis=1)
 		return rtmatrix.apply(lambda e: 1+1/log(12)*e).to_dict()
-
-
-
-class NLLR(TLM):
-	"""
-	Temporal Entropy Weighted Normalized Log Likelihood Ratio 
-	A document distance metric from Kanhabua & Norvag (2008)
-	Lots of lambdas & idiomatic pandas functions will be used, they're superfast!
-
-	@param datec, connection to date collection in HTRC mongo database.
-	@param tfc, connection to one of 'tf_1', 'tf_2' and 'tf_3' collections in 
-		            HTRC mongo database.
-	@param nllrc, connection to one of 'nllr_1', 'nllr_2' and 'nllr_3' collections
-					to store NLLR results.
-	"""
-
-	def __init__(self, datec, tfc, nllrc, weighted=True):
-		TLM.__init__(self, datec, tfc, weighted)
-		self.nllrc = nllrc
 
 
 	@staticmethod
@@ -169,63 +153,50 @@ class NLLR(TLM):
 		return llrmatrix.to_dict()
 
 
-	def compute_nllr(self):
+	def compute_nllr(self, nllrc):
 		"""
-		Compute normalized log likelihood ratio, using deJong/Rode/Hiemstra 
-		Temporal Language Model, with a option of weighting by temporal 
-		entropy.
+		Compute Temporal Entropy Weighted Normalized Log Likelihood Ratio, 
+		a document distance metric from Kanhabua & Norvag (2008) using 
+		deJong/Rode/Hiemstra Temporal Language Model.
+		Lots of lambdas & idiomatic pandas functions will be used.
 
-		@param weighted, whether or not weighted by temporal entropy.
-		@return a 2D dictionary of NLLRs in format {docid:{daterange: .. } .. }
+		@param nllrc, connection to nllr output collection, one of 'nllr_1', 'nllr_2', 
+		             'nllr_3' and 'nllr_ocr'.
 		"""
 
 		print 'Computing TEwNLLR...'
-		nllrdict = {}
+		count = 0
+		nllrdict = {} # a 2D dictionary of CSs in format {docid:{daterange: .. } .. }
 		llrdict = self.compute_llr(self.get_rtmatrix())
-		docids = self.get_docids()
 		# read p(w|d) from MongoDB ('prob' field in tf_n collections)
-		for docid in docids:
+		for docid in self.get_docids():
 			tfdoc = self.tfc.find_one({u"_id":docid})
 			if tfdoc:
 				probs = tfdoc[u"prob"]
 				nllrdict[docid] = {}
 				for daterange in DATERANGES:
 					nllrdict[docid][daterange] = sum([self.tedict[term] * probs[term] * llrdict[daterange][term] for term in probs])
-		return nllrdict
+				count += 1
+				if count % 10000 == 0: 
+					print '  Finish computing NLLR for %s docs.' % count
+					nllrc.insert(reshape(nllrdict))
+					nllrdict = {}
+		# don't forget leftover nllrdict
+		print '  Finish computing NLLR for %s docs.' % count
+		nllrc.insert(reshape(nllrdict))
 
 
-	def run(self):
-		"""Run"""
-		self.nllrc.insert(reshape(self.compute_nllr()))
-
-
-
-class CS(TLM):
-	"""
-	Cosine similarity
-
-	@param datec, connection to date collection in HTRC mongo database.
-	@param tfc, connection to one of 'tf_1', 'tf_2' and 'tf_3' collections in 
-		            HTRC mongo database.
-	@param csc, connection to one of 'csc_1', 'csc_2' and 'csc_3' collections
-					to store Cos-Sim results.
-	"""
-	
-	def __init__(self, datec, tfc, csc, weighted=True):
-		TLM.__init__(self, datec, tfc, weighted)
-		self.csc = csc
-
-
-	def compute_cs(self):
+	def compute_cs(self, csc):
 		"""
 		Compute cosine similarity between each pair of term & chronon
 
-		@return a 2D dictionary of CSs in format {docid:{daterange: .. } .. }
+		@param csc, connection to cs output collection, one of 'cs_1', 'cs_2', 
+		             'cs_3' and 'cs_ocr'.
 		"""
 
 		print 'Computing Cosine-similarity...'
-		csdict = {}
-		docids = self.get_docids()
+		count = 0
+		csdict = {} # a 2D dictionary of CSs in format {docid:{daterange: .. } .. }
 		rtmatrix = self.get_rtmatrix()
 		# Normalize each column from freq to prob: p(w|dr)
 		rtmatrix = rtmatrix.div(rtmatrix.sum(axis=0), axis=1)
@@ -233,7 +204,7 @@ class CS(TLM):
 		rvlength = rtmatrix.applymap(lambda x: x*x).sum(axis=0).apply(sqrt)
 		rvlength = rvlength.to_dict()
 		rtmatrix = rtmatrix.to_dict()
-		for docid in docids:
+		for docid in self.get_docids():
 			tfdoc = self.tfc.find_one({u"_id":docid})
 			if tfdoc:
 				probs = tfdoc[u"prob"]
@@ -243,57 +214,66 @@ class CS(TLM):
 				for daterange in DATERANGES:
 					cossim = sum([self.tedict[term] * probs[term] * rtmatrix[daterange][term] for term in probs]) / (dvlength * rvlength[daterange])
 					csdict[docid][daterange] = cossim if cossim >= -1 and cossim <= 1 else 0
-		return csdict
+				count += 1
+				if count % 10000 == 0: 
+					print '  Finish computing CS for %s docs.' % count
+					csc.insert(reshape(csdict))
+					csdict = {}
+		# don't forget leftover csdict
+		print '  Finish computing CS for %s docs.' % count
+		csc.insert(reshape(csdict))
 
 
-	def run(self):
-		"""Run"""
-		self.csc.insert(reshape(self.compute_cs()))
-
-
-
-class KLD(TLM):
-	"""
-	Kullback-Leibler divergence
-
-	@param datec, connection to date collection in HTRC mongo database.
-	@param tfc, connection to one of 'tf_1', 'tf_2' and 'tf_3' collections in 
-		            HTRC mongo database.
-	@param kldc, connection to one of 'kld_1', 'kld_2' and 'kld_3' collections
-					to store KL Divergence results.
-	"""
-
-	def __init__(self, datec, tfc, kldc, weighted=True):
-		TLM.__init__(self, datec, tfc, weighted)
-		self.kldc = kldc
-
-
-	def compute_kld(self):
+	def compute_kld(self, kldc):
 		"""
 		Compute KL-Divergence for each pair of term & daterange
 
-		@return a 2D dictionary of KLDs in format {docid:{daterange: .. } .. }
+		@param kldc, connection to kld output collection, one of 'kld_1', 'kld_2', 
+		             'kld_3' and 'kld_ocr'.
 		"""
 
 		print 'Computing KL-Divergence...'
-		klddict = {}
-		docids = self.get_docids()
+		count = 0
+		klddict = {} # a 2D dictionary of KLDs in format {docid:{daterange: .. } .. }
 		rtmatrix = self.get_rtmatrix()
 		# Normalize each column from freq to prob: p(w|dr)
 		rtmatrix = rtmatrix.div(rtmatrix.sum(axis=0), axis=1).to_dict()
-		for docid in docids:
+		for docid in self.get_docids():
 			tfdoc = self.tfc.find_one({u"_id":docid})
 			if tfdoc:
 				probs = tfdoc[u"prob"]
 				klddict[docid] = {}
 				for daterange in DATERANGES:
 					klddict[docid][daterange] = sum([self.tedict[term] * probs[term] * log10(probs[term]/rtmatrix[daterange][term]) for term in probs])
-		return klddict
+				count += 1
+				if count % 10000 == 0: 
+					print '  Finish computing KLD for %s docs.' % count
+					kldc.insert(reshape(klddict))
+					klddict = {}
+		# don't forget leftover klddict
+		print '  Finish computing KLD for %s docs.' % count
+		kldc.insert(reshape(klddict))
 
 
-	def run(self):
-		"""Run"""
-		self.kldc.insert(reshape(self.compute_kld()))
+	def run(self, outc):
+		"""
+		Run
+
+		@param outc, connection to output collection, one of 'nllr_1', 'nllr_2', 
+		             'nllr_3', 'nllr_ocr', 'csc_1', 'csc_2', 'csc_3', 'csc_ocr', 
+		             'kld_1', 'kld_2', 'kld_3' and 'kld_ocr'.
+		"""
+		metric, _, postfix = outc.name.rpartition('_')
+		if postfix != self.tfc.name.rpartition('_')[-1]:
+			raise ValueError('Names of tf and output collection do not match')
+		if metric == 'nllr':
+			self.compute_nllr(outc)
+		elif metric == 'cs':
+			self.compute_cs(outc)
+		elif metric == 'kld':
+			self.compute_kld(outc)
+		else:
+			raise ValueError('Invalid metric.')
 
 
 
@@ -340,66 +320,61 @@ class RunTLM(object):
 		return db, outcs
 
 
-	def run(self, tlm, weighted=True):
+	def run(self, weighted=True):
 		"""
 		Run.
-
-		@param tlm, name of model to be used, must be one of 'nllr', 'kld' and 'cs'.
 		"""
-		if tlm == 'nllr':
-			model = NLLR
-		elif tlm == 'kld':
-			model = KLD
-		elif tlm == 'cs':
-			model = CS
-		else:
-			raise ValueError('Invalid TLM name.')
 		if self.outcs:
-			for outc in self.outcs:
-				if outc.name == tlm + '_1':
-					print 'Generate %s_1...' % tlm
-					model(self.datec, self.tfcs[0], outc, weighted).run()
-				elif outc.name == tlm + '_2':
-					print 'Generate %s_2...' % tlm
-					model(self.datec, self.tfcs[1], outc, weighted).run()
-				elif outc.name == tlm + '_3':
-					print 'Generate %s_3...' % tlm
-					model(self.datec, self.tfcs[2], outc, weighted).run()
-				elif outc.name == tlm + '_ocr':
-					print 'Generate %s_ocr...' % tlm
-					model(self.datec, self.cfc, outc, weighted).run()
+			# group by postfix ('_1', '_2', '_3' & '_ocr')
+			for gtuple in groupby(self.outcs, lambda x: x.name.rpartition('_')[-1]):
+				postfix, outcs = gtuple
+				outcs = list(outcs)
+				if postfix == '1':
+					model = TLM(self.datec, self.tfcs[0], weighted)
+				elif postfix == '2':
+					model = TLM(self.datec, self.tfcs[1], weighted)
+				elif postfix == '3':
+					model = TLM(self.datec, self.tfcs[2], weighted)
+				elif postfix == 'ocr':
+					model = TLM(self.datec, self.cfc, weighted)
 				else:
 					raise ValueError('Invalid output collection names.')
+				for outc in outcs:
+					print 'Generate %s...' % outc.name
+					model.run(outc)
 		else:
-			print 'All %s output collections already exists.' % tlm
+			print 'All output collections already exists.'
 
 
 
 # Feature extraction jobs
-WEIGHTED = False
-def job1(): RunTLM(['nllr_1', 'nllr_2', 'nllr_3', 'nllr_ocr']).run('nllr', WEIGHTED)
-def job2(): RunTLM(['kld_1', 'kld_2', 'kld_3', 'kld_ocr']).run('kld', WEIGHTED)
-def job3(): RunTLM(['cs_1', 'cs_2', 'cs_3', 'cs_ocr']).run('cs', WEIGHTED)
+WEIGHTED = True
+def job1(): RunTLM(['nllr_1', 'kld_1', 'cs_1']).run(WEIGHTED)
+def job2(): RunTLM(['nllr_2', 'kld_2', 'cs_2']).run(WEIGHTED)
+def job3(): RunTLM(['nllr_3', 'kld_3', 'cs_3']).run(WEIGHTED)
+def job4(): RunTLM(['nllr_ocr', 'kld_ocr', 'cs_ocr']).run(WEIGHTED)
 
 def run_parallel():
-	"""Run jobs in parallel, may need at least 8gb memory"""
+	"""Run jobs in parallel, may need at least 16gb memory"""
 	from multiprocessing import Pool
-	pool = Pool(3)
+	pool = Pool(processes=2)
 	result1 = pool.apply_async(job1, [])
 	result2 = pool.apply_async(job2, [])
 	result3 = pool.apply_async(job3, [])
+	result4 = pool.apply_async(job4, [])
 	result1.get()
 	result2.get()
 	result3.get()
+	result4.get()
 
 def run_serial():
-	"""Run jobs in serial, 2gb memory should be enough"""
-	job1()
-	job2()
-	job3()
+	"""Run jobs in serial, 4gb memory should be enough"""
+	outcnames = ['nllr_1', 'kld_1', 'cs_1', 'nllr_2', 'kld_2', 'cs_2',
+		'nllr_3', 'kld_3', 'cs_3', 'nllr_ocr', 'kld_ocr', 'cs_ocr']
+	RunTLM(outcnames).run(WEIGHTED)
 
 
 
 if __name__ == '__main__':
-	# run_serial()
-	run_parallel()
+	run_serial()
+	# run_parallel()
