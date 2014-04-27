@@ -185,12 +185,19 @@ class Evaluation(object):
 		"""
 		print '\nCompare 4 classifiers x only date features.'
 		self.eval_date()
+		if output:
+			self.results.to_csv('results_date.csv')
+			self.results = DataFrame()
 		print '\nCompare 3 classifiers x 3 metrics x only text features.'
 		self.eval_text()
+		if output:
+			self.results.to_csv('results_text.csv')
+			self.results = DataFrame()
 		print '\nCompare 3 classifiers x 3 metrics x both date and text features.'
 		self.eval_date_n_text()
 		if output:
-			self.results.to_csv('results.csv')
+			self.results.to_csv('results_datetext.csv')
+			self.results = DataFrame()
 
 
 
