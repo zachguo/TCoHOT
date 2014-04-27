@@ -99,8 +99,9 @@ def repeat(clf, columns, num=10):
 	"""
 
 	from multiprocessing import Pool
-	pool = Pool(2)
+	pool = Pool()
 	results = pool.map(job_wrapper, [[clf, columns]] * num)
+	pool.terminate()
 	return results
 
 def get_prf(results, output_cm=False):
