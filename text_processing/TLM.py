@@ -137,7 +137,7 @@ class TLM(object):
 		"""
 		Output term * daterange matrix with TE into a csv file.
 		"""
-		self.get_rtmatrix().merge(pd.DataFrame({'TE':self.tedict}), left_index=True, right_index=True).to_csv(filename)
+		self.get_rtmatrix().merge(pd.DataFrame({'TE':self.tedict}), left_index=True, right_index=True).to_csv(filename, encoding='utf-8')
 
 	@staticmethod
 	def compute_llr(rtmatrix):
