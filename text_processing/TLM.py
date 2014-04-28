@@ -133,6 +133,11 @@ class TLM(object):
 		rtmatrix = rtmatrix.applymap(lambda x: x*log(x)).sum(axis=1)
 		return rtmatrix.apply(lambda e: 1+1/log(12)*e).to_dict()
 
+	def output_rtmatrix(self, filename):
+		"""
+		Output term * daterange matrix with TE into a csv file.
+		"""
+		self.get_rtmatrix().merge(pd.DataFrame({'TE':self.tedict}), left_index=True, right_index=True).to_csv(filename)
 
 	@staticmethod
 	def compute_llr(rtmatrix):
@@ -319,6 +324,12 @@ class RunTLM(object):
 		return db, outcs
 
 
+	def output_rtmatrixes(self):
+		"""Output rtmatrixes into csvs"""
+		for i in range(len(self.tfcs)):
+			TLM(self.datec, self.tfcs[i]).output_rtmatrix('rtmatrix_%s.csv' % i)
+
+
 	def run(self, weighted=True):
 		"""
 		Run.
@@ -375,5 +386,6 @@ def run_serial():
 
 
 if __name__ == '__main__':
-	run_serial()
+	# run_serial()
 	# run_parallel()
+	RunTLM([]).output_rtmatrixes()
