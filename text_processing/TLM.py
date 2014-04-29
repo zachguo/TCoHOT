@@ -9,12 +9,13 @@ Siyuan Guo, Apr 2014
 from pymongo import MongoClient
 from collections import defaultdict
 from itertools import groupby
-from math import log, log10, sqrt
+from math import log, log10, sqrt, pow
 from utils import reshape, fakedict
 import pandas as pd
 
 
 
+WEIGHTED = True
 EPSILON = 0.0001
 DATERANGES = ["pre-1839", "1840-1860", "1861-1876", "1877-1887", 
 			  "1888-1895", "1896-1901", "1902-1906", "1907-1910", 
@@ -205,6 +206,8 @@ class TLM(object):
 		rtmatrix = self.get_rtmatrix()
 		# Normalize each column from freq to prob: p(w|dr)
 		rtmatrix = rtmatrix.div(rtmatrix.sum(axis=0), axis=1)
+		# weighted by TE
+		rtmatrix = rtmatrix.mul(pd.Series(self.tedict), axis=0)
 		# a vector of which each cell is the vector length for a chronon
 		rvlength = rtmatrix.applymap(lambda x: x*x).sum(axis=0).apply(sqrt)
 		rvlength = rvlength.to_dict()
@@ -215,7 +218,7 @@ class TLM(object):
 				probs = tfdoc[u"prob"]
 				csdict[docid] = {}
 				# a vector of which each cell is the vector length for a doc
-				dvlength = sqrt(sum([x*x for x in probs.values()]))
+				dvlength = sqrt(sum([pow(self.tedict[k]*x, 2) for k,x in probs.items()]))
 				for daterange in DATERANGES:
 					cossim = sum([self.tedict[term] * probs[term] * rtmatrix[daterange][term] for term in probs]) / (dvlength * rvlength[daterange])
 					csdict[docid][daterange] = cossim if cossim >= -1 and cossim <= 1 else 0
@@ -358,7 +361,7 @@ class RunTLM(object):
 
 
 # Feature extraction jobs
-WEIGHTED = True
+
 def job1(): RunTLM(['nllr_1', 'kld_1', 'cs_1']).run(WEIGHTED)
 def job2(): RunTLM(['nllr_2', 'kld_2', 'cs_2']).run(WEIGHTED)
 def job3(): RunTLM(['nllr_3', 'kld_3', 'cs_3']).run(WEIGHTED)
@@ -387,5 +390,5 @@ def run_serial():
 
 if __name__ == '__main__':
 	# run_serial()
-	# run_parallel()
-	RunTLM([]).output_rtmatrixes()
+	run_parallel()
+	# RunTLM([]).output_rtmatrixes()
