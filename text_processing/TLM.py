@@ -362,23 +362,20 @@ class RunTLM(object):
 
 # Feature extraction jobs
 
-def job1(): RunTLM(['nllr_1', 'kld_1', 'cs_1']).run(WEIGHTED)
-def job2(): RunTLM(['nllr_2', 'kld_2', 'cs_2']).run(WEIGHTED)
-def job3(): RunTLM(['nllr_3', 'kld_3', 'cs_3']).run(WEIGHTED)
-def job4(): RunTLM(['nllr_ocr', 'kld_ocr', 'cs_ocr']).run(WEIGHTED)
+def job(outcs): RunTLM(outcs).run(WEIGHTED)
 
 def run_parallel():
 	"""Run jobs in parallel, may need at least 16gb memory"""
+	outcnames = [
+		['nllr_1', 'kld_1', 'cs_1'], 
+		['nllr_2', 'kld_2', 'cs_2'],
+		['nllr_3', 'kld_3', 'cs_3'],
+		['nllr_ocr', 'kld_ocr', 'cs_ocr']
+		]
 	from multiprocessing import Pool
-	pool = Pool(processes=2)
-	result1 = pool.apply_async(job1, [])
-	result2 = pool.apply_async(job2, [])
-	result3 = pool.apply_async(job3, [])
-	result4 = pool.apply_async(job4, [])
-	result1.get()
-	result2.get()
-	result3.get()
-	result4.get()
+	pool = Pool(2)
+	results = pool.map(job, outcnames)
+	pool.close()
 
 def run_serial():
 	"""Run jobs in serial, 4gb memory should be enough"""
