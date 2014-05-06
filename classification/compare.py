@@ -134,9 +134,14 @@ class Evaluation(object):
 	def __init__(self):
 		self.results = DataFrame()
 
-	def eval_date(self):
+	def output(self, filename):
+		self.results.to_csv(filename)
+		self.results = DataFrame()
+
+	def eval_date(self, output=True):
 		"""
 		Compare 4 classifiers x only date features.
+		@param output, whether or not to output results as a csv file, default True.
 		"""
 		columns = DVCOL + DATECOLS
 		for clf in (BL, LR, DT, SVM):
@@ -145,26 +150,21 @@ class Evaluation(object):
 			for sname, scores in prfs_named:
 				col_label = '_'.join([sname, clf.LABEL, 'd'])
 				self.results[col_label] = scores
+		if output:
+			self.output('results_date.csv')
 
-	def eval_text(self, addon=('', [])):
+	def eval_text(self, features, fnames):
 		"""
 		Compare 3 classifiers x 3 metrics x only text features.
-		@param addon, default as ('', []), or receive a (('d', DATECOLS)), for
-		              refactoring `eval_date_n_text` method.
+		@param features, a dict of features, metric is the key, values are a list of 
+		                 features.
+		@param fnames, a list of feature names.
 		"""
 		for m in METRICS:
 			print '  Use %s metric...' % m
 			for clf in (LR, DT, SVM):
 				print '    Use %s classifier...' % clf.NAME
-				features = (
-					DVCOL + OCRCOLS[m], 
-					DVCOL + OCRCOLS[m] + UNICOLS[m],
-					DVCOL + OCRCOLS[m] + UNICOLS[m] + BICOLS[m],
-					DVCOL + OCRCOLS[m] + UNICOLS[m] + BICOLS[m] + TRICOLS[m]
-					)
-				features = [x+addon[1] for x in features]
-				fnames = [x+addon[0] for x in ('o', 'ou', 'oub', 'oubt')]
-				features_named = zip(fnames, features)
+				features_named = zip(fnames, features[m])
 				for fname, columns in features_named:
 					print '      Use %s feature set...' % fname
 					prfs_named = zip(('p', 'r', 'f'), get_prf(repeat(clf, columns)))
@@ -172,11 +172,77 @@ class Evaluation(object):
 						col_label = '_'.join([sname, clf.LABEL, m, fname])
 						self.results[col_label] = scores
 
-	def eval_date_n_text(self):
+	def eval_text_incremental(self, output=True):
+		"""
+		Compare 3 classifiers x 3 metrics x only incremental text features.
+		@param output, whether or not to output results as a csv file, default True.
+		"""
+		features = {}
+		for m in METRICS:
+			features[m] = (
+				DVCOL + OCRCOLS[m], 
+				DVCOL + OCRCOLS[m] + UNICOLS[m],
+				DVCOL + OCRCOLS[m] + UNICOLS[m] + BICOLS[m],
+				DVCOL + OCRCOLS[m] + UNICOLS[m] + BICOLS[m] + TRICOLS[m]
+				)
+		fnames = ('o', 'ou', 'oub', 'oubt')
+		self.eval_text(features, fnames)
+		if output:
+			self.output('results_text_inc.csv')
+
+	def eval_text_individual(self, output=True):
+		"""
+		Compare 3 classifiers x 3 metrics x only individual text features.
+		@param output, whether or not to output results as a csv file, default True.
+		"""
+		features = {}
+		for m in METRICS:
+			features[m] = (
+				DVCOL + OCRCOLS[m], 
+				DVCOL + UNICOLS[m],
+				DVCOL + BICOLS[m],
+				DVCOL + TRICOLS[m]
+				)
+		fnames = ('o', 'u', 'b', 't')
+		self.eval_text(features, fnames)
+		if output:
+			self.output('results_text_ind.csv')
+
+	def eval_date_n_text(self, output=True):
 		"""
 		Compare 3 classifiers x 3 metrics x both date and text features.
+		@param output, whether or not to output results as a csv file, default True.
 		"""
-		self.eval_text(('d', DATECOLS))
+		features = {}
+		for m in METRICS:
+			ftrs = (
+				DVCOL + OCRCOLS[m], 
+				DVCOL + OCRCOLS[m] + UNICOLS[m],
+				DVCOL + OCRCOLS[m] + UNICOLS[m] + BICOLS[m],
+				DVCOL + OCRCOLS[m] + UNICOLS[m] + BICOLS[m] + TRICOLS[m]
+				)
+			features[m] = [x+DATECOLS for x in ftrs]
+		fnames = ('do', 'dou', 'doub', 'doubt')
+		self.eval_text(features, fnames)
+		if output:
+			self.output('results_datetext.csv')
+
+	def eval_no_char(self, output=True):
+		"""
+		Compare 3 classifiers x 3 metrics x only text (without character level)
+		features.
+		"""
+		features = {}
+		for m in METRICS:
+			features[m] = (
+				DVCOL + UNICOLS[m],
+				DVCOL + UNICOLS[m] + BICOLS[m],
+				DVCOL + UNICOLS[m] + BICOLS[m] + TRICOLS[m]
+				)
+		fnames = ('u', 'ub', 'ubt')
+		self.eval_text(features, fnames)
+		if output:
+			self.output('results_noocr.csv')
 
 	def run(self, output=True):
 		"""
@@ -184,23 +250,16 @@ class Evaluation(object):
 		@param output, whether or not to output results as a csv file, default True.
 		"""
 		print '\nCompare 4 classifiers x only date features.'
-		self.eval_date()
-		if output:
-			self.results.to_csv('results_date.csv')
-			self.results = DataFrame()
+		self.eval_date(output)
 		print '\nCompare 3 classifiers x 3 metrics x only text features.'
-		self.eval_text()
-		if output:
-			self.results.to_csv('results_text.csv')
-			self.results = DataFrame()
+		self.eval_text_incremental(output)
 		print '\nCompare 3 classifiers x 3 metrics x both date and text features.'
-		self.eval_date_n_text()
-		if output:
-			self.results.to_csv('results_datetext.csv')
-			self.results = DataFrame()
+		self.eval_date_n_text(output)
 
 
 
 if __name__ == '__main__':
 	# READYDATA.to_csv('data.csv')
-	Evaluation().run()
+	# Evaluation().run()
+	# Evaluation().eval_no_char()
+	Evaluation().eval_text_individual()
