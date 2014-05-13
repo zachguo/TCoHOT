@@ -9,7 +9,7 @@ Siyuan Guo, Apr 2014
 from prepare import Data
 from model import BL, LR, DT, SVM
 from sklearn.metrics import precision_score, recall_score, f1_score, confusion_matrix
-# from scipy.stats import ttest_rel
+from sklearn.cross_validation import StratifiedKFold as kfold
 from pandas import DataFrame
 import cPickle, os
 
@@ -83,30 +83,31 @@ TRICOLS = {m:[l+'-'+m+'_3' for l in DATERANGES] for m in METRICS}
 
 def job_wrapper(args):
 	"""
-	Wrapper for a parallel job, used by `repeat` function.
-	@param args, a 2-tuple of clf and columns.
+	Wrapper for a parallel job, used by `cv_10fold` function.
+	@param args, a 2-tuple of 2-tuples: (clf, columns) & (train_indices, 
+		         test_indices).
 	"""
-	clf, columns = args
-	return clf(READYDATA[columns]).fit_and_predict()
+	(clf, columns), (i_train, i_test) = args
+	return clf(READYDATA[columns], i_train, i_test).fit_and_predict()
 
-def repeat(clf, columns, num=10):
+def cv_10fold(clf, columns):
 	"""
-	Run the specified model n times in parallel, and return the results.
+	Run the specified model with 10 fold cross validation in parallel, and 
+	return the results.
 	@param clf, a classifier, one of BL, LR, DT and SVM.
 	@param columns, the columns to be used in data.
-	@param num, number of repeats
 	@return results, a list of 2-tuples result [(ypred, ytest), ...]
 	"""
-
+	t_t_indices = kfold(READYDATA['range'], 10)
 	from multiprocessing import Pool
 	pool = Pool()
-	results = pool.map(job_wrapper, [[clf, columns]] * num)
+	results = pool.map(job_wrapper, zip([[clf, columns]] * 10, t_t_indices))
 	pool.close()
 	return results
 
 def get_prf(results, output_cm=False):
 	"""
-	Take the output of `repeatRun` as input to produce model evaluations.
+	Take the output of `cv_10fold` as input to produce model evaluations.
 	@param results, a list of 2-tuples result [(ypred, ytest), ...]
 	@param output_cm, whether or not print confusion_matrix
 	@return a list of precisions, recalls, f1s
@@ -146,7 +147,7 @@ class Evaluation(object):
 		columns = DVCOL + DATECOLS
 		for clf in (BL, LR, DT, SVM):
 			print '  Use %s classifier...' % clf.NAME
-			prfs_named = zip(('p', 'r', 'f'), get_prf(repeat(clf, columns)))
+			prfs_named = zip(('p', 'r', 'f'), get_prf(cv_10fold(clf, columns)))
 			for sname, scores in prfs_named:
 				col_label = '_'.join([sname, clf.LABEL, 'd'])
 				self.results[col_label] = scores
@@ -167,7 +168,7 @@ class Evaluation(object):
 				features_named = zip(fnames, features[m])
 				for fname, columns in features_named:
 					print '      Use %s feature set...' % fname
-					prfs_named = zip(('p', 'r', 'f'), get_prf(repeat(clf, columns)))
+					prfs_named = zip(('p', 'r', 'f'), get_prf(cv_10fold(clf, columns)))
 					for sname, scores in prfs_named:
 						col_label = '_'.join([sname, clf.LABEL, m, fname])
 						self.results[col_label] = scores
