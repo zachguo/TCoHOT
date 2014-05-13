@@ -253,6 +253,10 @@ class Evaluation(object):
 		self.eval_date(output)
 		print '\nCompare 3 classifiers x 3 metrics x only text features.'
 		self.eval_text_incremental(output)
+		print '\nCompare 3 classifiers x 3 metrics x only individual text features.'
+		self.eval_text_individual()
+		print '\nCompare 3 classifiers x 3 metrics x all text but character features.'
+		self.eval_no_char()
 		print '\nCompare 3 classifiers x 3 metrics x both date and text features.'
 		self.eval_date_n_text(output)
 
@@ -260,6 +264,4 @@ class Evaluation(object):
 
 if __name__ == '__main__':
 	# READYDATA.to_csv('data.csv')
-	# Evaluation().run()
-	# Evaluation().eval_no_char()
-	Evaluation().eval_text_individual()
+	Evaluation().run()
