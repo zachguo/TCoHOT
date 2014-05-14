@@ -72,7 +72,7 @@ def print_ngram(sent):
 		if doc_id:
 			# get ngrams
 			for i in xrange(numw):
-				for j in xrange(i+1, min(i+4, numw)):
+				for j in xrange(i+1, min(i+4, numw+1)):
 					term = ' '.join(words[i:j])
 					# emit key-value pair into stdout, key is a composite key made up of a doc_id, a separator and a term.
 					print '%s[SEP]%s\t%s' % (doc_id,term,1)
