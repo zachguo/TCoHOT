@@ -1,17 +1,14 @@
 Temporal Classification of HathiTrust OCRed Texts
 ============
 
-> This is a course project for Z604 (Big Data Analytics for Web and Text) offered by Xiaozhong Liu & Miao Chen in 2014 Spring.
+> Paper published in iConference 2015 Proceedings http://hdl.handle.net/2142/73656
+
+> This is also a course project for Z604 (*Big Data Analytics for Web and Text*) in 2014 Spring, taught by Xiaozhong Liu and Miao Chen.
 
 ### Abstract
-We investigate the temporal resolution of texts in an effort to determine their date of publication and classify each in discrete temporal intervals(chronons). We describe and evaluate experiments that incorporate both temporal cues, i.e. explicit dates, pervasiveness of OCR errors, and document-chronon distance based on N-gram text cues. Three separate distance metrics (*Cosine Similarity*, *Kullback-Leibler Divergence*, and *Normalized Log-Likelihood Ratio*) and three classifiers (*logistic regression*, *decision tree*, and *support vector machine*) are evaluated using different feature sets. Our results indicate that logistic regression classifier plus NLLR metric achieve highest performance, and document-chronon distances computed based on higher order N-grams (bigrams & trigrams) are most effective features.
-
-### Paper
-Draft paper is available [here](https://www.sharelatex.com/project/53617bd34fce011556d4415d?r=19cfa5f5&rs=ps&rm=d).
+In large-scale digital libraries, it is not uncommon that some bibliographic fields in metadata records are incomplete or missing. Adding to the incomplete or missing metadata can greatly facilitate users' search and access to digital library resources. Temporal information, such as publication date, is a key descriptor of digital resources. In this study, we investigate text mining methods to automatically resolve missing publication dates for the HathiTrust corpora, a large collection of documents digitized by optical character recognition (OCR). In comparison with previous approaches using only unigrams as features, our experiment results show that methods incorporating higher order n-gram features, e.g., bigrams and trigrams, can more effectively classify a document into discrete temporal intervals or "chronons". Our approach can be generalized to classify volumes within other digital libraries.
 
 ### Team
 * Siyuan Guo @zachguo
-* Bin Dai @bindai
 * Trevor Edelblute @tedelblu
-* Zhichao Huo @zhhuo
-* Pallavi Murthy @PallaviMurthy
+* Bin Dai @bindai
